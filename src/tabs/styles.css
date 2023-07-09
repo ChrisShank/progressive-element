@@ -1,0 +1,28 @@
+these-tabs {
+  > [slot='tabs'] {
+    border-bottom: solid 2px hsl(240 4.6% 22%);
+    display: flex;
+    flex-wrap: nowrap;
+    margin-top: -2px;
+
+    > [slot='tab'] {
+      font-size: 14px;
+      color: rgb(142, 142, 154);
+      white-space: nowrap;
+      user-select: none;
+      cursor: pointer;
+      padding: 16px 20px;
+      position: relative;
+      top: 2px;
+
+      &:hover {
+        color: rgb(39, 186, 253);
+      }
+
+      &[active='true'] {
+        color: rgb(39, 186, 253);
+        border-bottom: solid 2px rgb(39, 186, 253);
+      }
+    }
+  }
+}

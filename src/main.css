@@ -1,0 +1,20 @@
+@import './tabs/styles.css';
+
+body {
+  background-color: hsl(240, 5.9%, 11%);
+  color: rgb(232, 232, 236);
+  font-family: -apple-system, 'system-ui', 'Segoe UI', Roboto, Helvetica, Arial,
+    sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+}
+
+[panel] {
+  padding: 1rem;
+}
+
+these-tabs:not([active-tab='foo']) ~ [panel='foo'] {
+  display: none;
+}
+
+these-tabs:not([active-tab='bar']) ~ [panel='bar'] {
+  display: none;
+}
