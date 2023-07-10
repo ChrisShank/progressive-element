@@ -6,21 +6,21 @@ const htmlPlugin = (): Plugin => {
   return {
     name: 'html-transform',
     transformIndexHtml(html) {
-      return html.replace(
-        'RENDER_TABS',
-        renderToString(
-          renderTabs(
-            {
-              tabs: [
-                { id: 'foo', label: 'Foo' },
-                { id: 'bar', label: 'Bar' },
-              ],
-              activeTab: 'foo',
-            },
-            { isServerRendered: true }
-          )
+      const tabs = renderToString(
+        renderTabs(
+          {
+            tabs: [
+              { id: 'foo', label: 'Foo' },
+              { id: 'bar', label: 'Bar', closeable: true },
+              { id: 'baz', label: 'Baz', closeable: true },
+              { id: 'fooBar', label: 'FooBar', closeable: true },
+            ],
+            activeTab: 'foo',
+          },
+          { isServerRendered: true }
         )
       );
+      return html.replace('RENDER_TABS', tabs);
     },
   };
 };
