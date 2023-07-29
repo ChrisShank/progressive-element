@@ -27,7 +27,7 @@ these-tabs {
         border-bottom: solid 2px rgb(39, 186, 253);
       }
 
-      > button[slot='tab-close-button'] {
+      > [slot='tab-close-button'] {
         background: none;
         border: none;
         color: rgb(142, 142, 154);
