@@ -1,5 +1,9 @@
 // import './tabs/element.ts'
 
+interface ProgressiveElement {
+  handleEvent(event: Event): void | Promise<void>;
+}
+
 interface Intention {
   intention: string;
   target: HTMLElement;
@@ -17,14 +21,46 @@ function findClosestIntention(event: Event): Intention | Record<string, never> {
   return {};
 }
 
-class MyElement extends HTMLElement {
-  count: HTMLElement = this.querySelector('#count')!;
+interface AttributeChangeEventDetail {
+  name: string;
+  oldValue: string | null;
+  newValue: string | null;
+}
+
+class AttributeChangeEvent extends CustomEvent<AttributeChangeEventDetail> {
+  constructor(name: string, oldValue: string | null, newValue: string | null) {
+    super('attribute-change', { detail: { name, oldValue, newValue } });
+  }
+}
+
+// Any string is valid, but we can provide auto-complete for built-in event.
+type AnyEventType = keyof HTMLElementEventMap | (string & {});
+
+class ProgressiveElement extends HTMLElement implements EventListenerObject {
+  static observedAttributes?: string[];
+  static observedEvents?: AnyEventType[];
 
   constructor() {
     super();
 
-    this.addEventListener('click', this);
+    const observedEvents = (this.constructor as typeof ProgressiveElement).observedEvents ?? [];
+    for (const event of observedEvents) {
+      this.addEventListener(event, this);
+    }
   }
+
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
+    this.handleEvent(new AttributeChangeEvent(name, oldValue, newValue));
+  }
+
+  handleEvent(_event: Event): void {}
+}
+
+class MyElement extends ProgressiveElement {
+  static observedEvents = ['click'];
+  static observedAttributes = ['foo'];
+
+  count: HTMLElement = this.querySelector('#count')!;
 
   handleEvent(event: Event) {
     const { intention } = findClosestIntention(event);
