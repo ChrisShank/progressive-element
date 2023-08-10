@@ -1,10 +1,5 @@
 lockfileVersion: '6.0'
 
-dependencies:
-  lit:
-    specifier: ^2.7.5
-    version: 2.7.5
-
 devDependencies:
   typescript:
     specifier: ^5.1.6
@@ -213,20 +208,6 @@ packages:
     dev: true
     optional: true
 
-  /@lit-labs/ssr-dom-shim@1.1.1:
-    resolution: {integrity: sha512-kXOeFbfCm4fFf2A3WwVEeQj55tMZa8c8/f9AKHMobQMkzNUfUj+antR3fRPaZJawsa1aZiP/Da3ndpZrwEe4rQ==}
-    dev: false
-
-  /@lit/reactive-element@1.6.2:
-    resolution: {integrity: sha512-rDfl+QnCYjuIGf5xI2sVJWdYIi56CTCwWa+nidKYX6oIuBYwUbT/vX4qbUDlHiZKJ/3FRNQ/tWJui44p6/stSA==}
-    dependencies:
-      '@lit-labs/ssr-dom-shim': 1.1.1
-    dev: false
-
-  /@types/trusted-types@2.0.3:
-    resolution: {integrity: sha512-NfQ4gyz38SL8sDNrSixxU2Os1a5xcdFxipAFxYEuLUlvU2uDwS4NUpsImcf1//SlWItCVMMLiylsxbmNMToV/g==}
-    dev: false
-
   /esbuild@0.18.17:
     resolution: {integrity: sha512-1GJtYnUxsJreHYA0Y+iQz2UEykonY66HNWOb0yXYZi9/kNrORUEHVg87eQsCtqh59PEJ5YVZJO98JHznMJSWjg==}
     engines: {node: '>=12'}
@@ -264,28 +245,6 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
-
-  /lit-element@3.3.2:
-    resolution: {integrity: sha512-xXAeVWKGr4/njq0rGC9dethMnYCq5hpKYrgQZYTzawt9YQhMiXfD+T1RgrdY3NamOxwq2aXlb0vOI6e29CKgVQ==}
-    dependencies:
-      '@lit-labs/ssr-dom-shim': 1.1.1
-      '@lit/reactive-element': 1.6.2
-      lit-html: 2.7.5
-    dev: false
-
-  /lit-html@2.7.5:
-    resolution: {integrity: sha512-YqUzpisJodwKIlbMFCtyrp58oLloKGnnPLMJ1t23cbfIJjg/H9pvLWK4XS69YeubK5HUs1UE4ys9w5dP1zg6IA==}
-    dependencies:
-      '@types/trusted-types': 2.0.3
-    dev: false
-
-  /lit@2.7.5:
-    resolution: {integrity: sha512-i/cH7Ye6nBDUASMnfwcictBnsTN91+aBjXoTHF2xARghXScKxpD4F4WYI+VLXg9lqbMinDfvoI7VnZXjyHgdfQ==}
-    dependencies:
-      '@lit/reactive-element': 1.6.2
-      lit-element: 3.3.2
-      lit-html: 2.7.5
-    dev: false
 
   /nanoid@3.3.6:
     resolution: {integrity: sha512-BGcqMMJuToF7i1rt+2PWSNVnWIkGCU78jBG3RxO/bZlnZPK2Cmi2QaffxGO/2RvWi9sL+FAiRiXMgsyxQ1DIDA==}
