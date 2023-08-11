@@ -1,20 +1,29 @@
-@import './tabs/styles.css';
+* {
+  box-sizing: border-box;
+}
 
 body {
   background-color: hsl(240, 5.9%, 11%);
   color: rgb(232, 232, 236);
-  font-family: -apple-system, 'system-ui', 'Segoe UI', Roboto, Helvetica, Arial,
-    sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+  font-family: -apple-system, 'system-ui', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif,
+    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+  margin: 0;
+  height: 100vh;
 }
 
-[panel] {
-  padding: 1rem;
+header {
+  background-color: hsla(240, 10%, 82%, 0.26);
+  padding: 0.5rem 1rem;
 }
 
-these-tabs:not([active-tab='foo']) ~ [panel='foo'] {
-  display: none;
+h1 {
+  font-size: 1.5rem;
+  margin: 0;
 }
 
-these-tabs:not([active-tab='bar']) ~ [panel='bar'] {
-  display: none;
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem 1rem;
 }

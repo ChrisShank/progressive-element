@@ -5,13 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Server Rendered Custom Elements</title>
     <link rel="stylesheet" href="./src/main.css" />
-    <script type="module" src="./src/index.ts"></script>
+    <!-- <script type="module" src="./src/index.ts"></script> -->
   </head>
   <body>
-    <my-element>
-      <button on:click="INCREMENT">+</button>
-      <span id="count">0</span>
-      <button on:click="DECREMENT">-</button>
-    </my-element>
+    <header>
+      <h1>Endless Agile Backlog</h1>
+    </header>
+
+    <main>
+      <details>
+        <summary>There's a bug (#1)</summary>
+        You should fix this unreproducible bug.
+      </details>
+
+      <details>
+        <summary>There's another bug (#2)</summary>
+        You should fix this other unreproducible bug too.
+      </details>
+    </main>
   </body>
 </html>
