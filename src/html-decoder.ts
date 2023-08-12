@@ -85,13 +85,14 @@ export function renderToString<Result extends HTMLResult>(
   for (let i = 0; i < result.strings.length; i++) {
     string += result.strings[i];
 
-    const decoder = result.values[i];
+    const decoder = result.values[i] as Decoder;
     if (decoder !== undefined) {
-      // const value = values[decoder.name]
+      const value = (values as Record<string, any>)[decoder.name];
+      string += decoder.encode(value);
     }
   }
 
-  return string + ;
+  return string;
 }
 
 export function renderToDOM<Result extends HTMLResult>(result: Result) {}
