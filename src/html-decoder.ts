@@ -98,11 +98,9 @@ export function renderToString<Result extends HTMLResult>(
 export function renderToDOM<Result extends HTMLResult>(result: Result) {}
 
 const foo = html`<div>${boolean('foo')}</div>`;
-const bar = html`<div>${str('baz')}</div>`;
-const baz = html`<div>${foo} ${int('bar')} ${bar}</div>`;
+const bar = html`<div>${str('foo')}</div>`;
+const baz = html`<div>${foo} ${int('foo')} ${bar}</div>`;
 
 const result = renderToString(baz, {
   foo: true,
-  bar: 2,
-  baz: '2',
 });
