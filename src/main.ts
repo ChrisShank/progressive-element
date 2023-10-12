@@ -5,15 +5,10 @@ class MyCounter extends ProgressiveElement {
 
   display: HTMLElement = this.querySelector('[slot="count-display"]')!;
 
-  count: number = Number(this.display.innerText);
+  count = Number(this.display.innerText);
 
   handleEvent(event: AnyEvent) {
     const { intention } = findClosestIntention(event);
-
-    // Handle events with no intention here...
-    if (intention === undefined) return;
-
-    event.stopPropagation(); // Stop event propagation of all events that have an intention
 
     switch (intention) {
       case 'INCREMENT': {
