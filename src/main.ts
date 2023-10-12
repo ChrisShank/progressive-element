@@ -3,7 +3,9 @@ import { AnyEvent, ProgressiveElement, findClosestIntention } from './progressiv
 class MyCounter extends ProgressiveElement {
   static delegatedEvents = ['click'];
 
-  count: HTMLElement = this.querySelector('[slot="count-display"]')!;
+  display: HTMLElement = this.querySelector('[slot="count-display"]')!;
+
+  count: number = Number(this.display.innerText);
 
   handleEvent(event: AnyEvent) {
     const { intention } = findClosestIntention(event);
@@ -15,14 +17,16 @@ class MyCounter extends ProgressiveElement {
 
     switch (intention) {
       case 'INCREMENT': {
-        this.count.innerText = (Number(this.count.innerText) + 1).toString();
+        this.count++;
         break;
       }
       case 'DECREMENT': {
-        this.count.innerText = (Number(this.count.innerText) - 1).toString();
+        this.count--;
         break;
       }
     }
+
+    this.display.innerText = this.count.toString();
   }
 }
 
