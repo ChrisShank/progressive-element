@@ -1,11 +1,7 @@
 import { AnyEvent, ProgressiveElement, findClosestIntention } from './progressive-element';
 
 class MyCounter extends ProgressiveElement {
-  static observedEvents = ['click'];
-
-  static properties = {
-    count: Number,
-  };
+  static delegatedEvents = ['click'];
 
   count: HTMLElement = this.querySelector('[slot="count-display"]')!;
 
