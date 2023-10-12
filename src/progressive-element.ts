@@ -69,5 +69,6 @@ export class ProgressiveElement extends HTMLElement implements EventListenerObje
     this.handleEvent(new PropertyChangeEvent(name, oldValue, newValue));
   }
 
-  handleEvent(_event: AnyEvent): void {}
+  // @ts-ignore
+  handleEvent(event: AnyEvent): void {}
 }
