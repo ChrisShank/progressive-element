@@ -95,12 +95,14 @@ export function renderToString<Result extends HTMLResult>(
   return string;
 }
 
-export function renderToDOM<Result extends HTMLResult>(result: Result) {}
+export function renderToDOM<Result extends HTMLResult>(result: Result) {
+  result;
+}
 
 const foo = html`<div>${boolean('foo')}</div>`;
 const bar = html`<div>${str('foo')}</div>`;
 const baz = html`<div>${foo} ${int('foo')} ${bar}</div>`;
 
-const result = renderToString(baz, {
+renderToString(baz, {
   foo: true,
 });

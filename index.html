@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Server Rendered Custom Elements</title>
     <link rel="stylesheet" href="./src/main.css" />
-    <script type="module" src="./src/index.ts"></script>
+    <script type="module" src="./src/main.ts"></script>
   </head>
   <body>
-    <my-element>
+    <my-counter count="1">
       <button on:click="INCREMENT">+</button>
-      <span id="count">0</span>
+      <span slot="count-display">1</span>
       <button on:click="DECREMENT">-</button>
     </my-element>
   </body>
