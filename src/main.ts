@@ -1,28 +1,76 @@
 import { AnyEvent, ProgressiveElement, findClosestIntention } from './progressive-element';
 
-class MyCounter extends ProgressiveElement {
-  static delegatedEvents = ['click'];
+class TodoApp extends ProgressiveElement {
+  static delegatedEvents = ['click', 'submit', 'change'];
 
-  display: HTMLElement = this.querySelector('[slot="count-display"]')!;
+  newTodo: HTMLInputElement = this.querySelector('#new-todo')!;
+  count = this.querySelector('#todo-count')!;
+  todos = this.querySelector('#todos')!;
+  todoTemplate: HTMLTemplateElement = document.querySelector('#todo-template')!;
 
-  count = Number(this.display.innerText);
+  connectedCallback() {
+    // If there is no filter attribute, try it extract it from the URL's hash.
+    if (!this.hasAttribute('filter')) {
+      const value = location.hash.replace('#', '') || 'all';
+      this.setAttribute('filter', value);
+    }
+  }
 
   handleEvent(event: AnyEvent) {
-    const { intention } = findClosestIntention(event);
+    const { intention, target } = findClosestIntention(event);
 
     switch (intention) {
-      case 'INCREMENT': {
-        this.count++;
+      case 'FILTER': {
+        const value = target.getAttribute('filter');
+
+        if (!value) return;
+
+        this.setAttribute('filter', value);
         break;
       }
-      case 'DECREMENT': {
-        this.count--;
+      case 'ADD_TODO': {
+        (event as SubmitEvent).preventDefault();
+        const text = target.querySelector('input')?.value;
+        if (text) {
+          const li = this.todoTemplate.content.cloneNode(true) as HTMLElement;
+          const textInput = li.querySelector('input[type="text"]') as HTMLInputElement;
+          textInput.value = text;
+          this.todos.appendChild(li);
+          this.newTodo.value = '';
+          this.updateItemsLeft();
+        }
+        break;
+      }
+      case 'TODO_TOGGLED': {
+        this.updateItemsLeft();
+        break;
+      }
+      case 'MARK_ALL_COMPLETED': {
+        this.querySelectorAll('#todos input[type="checkbox"]:not(:checked)').forEach((el) => {
+          (el as HTMLInputElement).checked = true;
+        });
+        this.count.textContent = '0';
+        break;
+      }
+      case 'CLEAR_COMPLETED': {
+        this.querySelectorAll('#todos li:has(input[type="checkbox"]:checked)').forEach((el) => {
+          el.remove();
+        });
         break;
       }
     }
+  }
 
-    this.display.innerText = this.count.toString();
+  updateItemsLeft() {
+    const count = this.querySelectorAll('#todos input[type="checkbox"]:not(:checked)').length;
+    this.count.textContent = count.toString();
   }
 }
 
-MyCounter.register();
+TodoApp.register();
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'todo-app': TodoApp;
+  }
+}
