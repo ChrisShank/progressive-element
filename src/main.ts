@@ -1,5 +1,10 @@
 import { AnyEvent, ProgressiveElement, findClosestIntention } from './progressive-element';
 
+interface Todo {
+  text: string;
+  checked: boolean;
+}
+
 // TODO: local storage
 class TodoApp extends ProgressiveElement {
   static delegatedEvents = ['click', 'submit', 'change'];
@@ -15,6 +20,11 @@ class TodoApp extends ProgressiveElement {
       const value = location.hash.replace('#', '') || 'all';
       this.setAttribute('filter', value);
     }
+
+    const todos: Todo[] = JSON.parse(localStorage.getItem('todos') || '[]');
+    for (const { text, checked } of todos) {
+      this.addTodo(text, checked);
+    }
   }
 
   handleEvent(event: AnyEvent) {
@@ -23,15 +33,7 @@ class TodoApp extends ProgressiveElement {
     switch (intention) {
       case 'ADD_TODO': {
         (event as SubmitEvent).preventDefault();
-        const text = target.querySelector('input')?.value;
-        if (text) {
-          const li = this.todoTemplate.content.cloneNode(true) as HTMLElement;
-          const textInput = li.querySelector('input[type="text"]') as HTMLInputElement;
-          textInput.value = text;
-          this.todos.appendChild(li);
-          this.newTodo.value = '';
-          this.updateItemsLeft();
-        }
+        this.addTodo(target.querySelector('input')?.value);
         break;
       }
       case 'REMOVE_TODO': {
@@ -64,11 +66,38 @@ class TodoApp extends ProgressiveElement {
         break;
       }
     }
+    this.persistTodos();
+  }
+
+  addTodo(text: string = '', checked = false) {
+    const li = this.todoTemplate.content.cloneNode(true) as HTMLElement;
+    const textInput = li.querySelector('input[type="text"]') as HTMLInputElement;
+    textInput.value = text;
+
+    const checkbox = li.querySelector('input[type="checkbox"]') as HTMLInputElement;
+    checkbox.checked = checked;
+
+    this.todos.appendChild(li);
+    this.newTodo.value = '';
+    this.updateItemsLeft();
   }
 
   updateItemsLeft() {
     const count = this.querySelectorAll('#todos input[type="checkbox"]:not(:checked)').length;
     this.count.textContent = count.toString();
+  }
+
+  persistTodos() {
+    const todos: Todo[] = Array.from(this.querySelectorAll('#todos li')).map((li) => {
+      const textInput = li.querySelector('input[type="text"]') as HTMLInputElement;
+      const checkbox = li.querySelector('input[type="checkbox"]') as HTMLInputElement;
+      return {
+        text: textInput.value || '',
+        checked: checkbox.checked,
+      };
+    });
+
+    localStorage.setItem('todos', JSON.stringify(todos));
   }
 }
 
