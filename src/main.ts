@@ -1,5 +1,6 @@
 import { AnyEvent, ProgressiveElement, findClosestIntention } from './progressive-element';
 
+// TODO: local storage
 class TodoApp extends ProgressiveElement {
   static delegatedEvents = ['click', 'submit', 'change'];
 
@@ -20,14 +21,6 @@ class TodoApp extends ProgressiveElement {
     const { intention, target } = findClosestIntention(event);
 
     switch (intention) {
-      case 'FILTER': {
-        const value = target.getAttribute('filter');
-
-        if (!value) return;
-
-        this.setAttribute('filter', value);
-        break;
-      }
       case 'ADD_TODO': {
         (event as SubmitEvent).preventDefault();
         const text = target.querySelector('input')?.value;
@@ -41,8 +34,20 @@ class TodoApp extends ProgressiveElement {
         }
         break;
       }
+      case 'REMOVE_TODO': {
+        target.closest('li')?.remove();
+        break;
+      }
       case 'TODO_TOGGLED': {
         this.updateItemsLeft();
+        break;
+      }
+      case 'FILTER': {
+        const value = target.getAttribute('filter');
+
+        if (!value) return;
+
+        this.setAttribute('filter', value);
         break;
       }
       case 'MARK_ALL_COMPLETED': {
