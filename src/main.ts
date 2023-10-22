@@ -5,7 +5,6 @@ interface Todo {
   checked: boolean;
 }
 
-// TODO: local storage
 class TodoApp extends ProgressiveElement {
   static delegatedEvents = ['click', 'submit', 'change'];
 

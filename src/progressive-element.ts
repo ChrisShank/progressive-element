@@ -1,6 +1,6 @@
 interface Intention {
   intention: string;
-  target: HTMLElement;
+  target: Element;
 }
 
 export interface AnyEvent {
@@ -8,9 +8,12 @@ export interface AnyEvent {
   [key: string]: any;
 }
 
-export function findClosestIntention(event: AnyEvent): Intention | Record<string, never> {
+export function findClosestIntention(
+  event: AnyEvent,
+  prefix = 'on\\:'
+): Intention | Record<string, never> {
   if (event.target instanceof Element) {
-    const target = event.target.closest(`[on\\:${event.type}]`) as HTMLElement | null;
+    const target = event.target.closest(`[${prefix}${event.type}]`);
 
     if (target !== null) {
       const intention = target.getAttribute(`on:${event.type}`)!;
