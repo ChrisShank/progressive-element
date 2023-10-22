@@ -10,18 +10,31 @@ export interface AnyEvent {
 
 export function findClosestIntention(
   event: AnyEvent,
-  prefix = 'on\\:'
+  modifier?: (event: AnyEvent) => string,
+  prefix = 'on:'
 ): Intention | Record<string, never> {
   if (event.target instanceof Element) {
-    const target = event.target.closest(`[${prefix}${event.type}]`);
-
+    const attributeName = `${prefix}${event.type}${modifier?.(event) ?? ''}`;
+    const target = event.target.closest(`[${CSS.escape(attributeName)}]`);
     if (target !== null) {
-      const intention = target.getAttribute(`on:${event.type}`)!;
+      const intention = target.getAttribute(attributeName)!;
       return { intention, target };
     }
   }
 
   return {};
+}
+
+const systemKeys = ['alt', 'ctrl', 'meta', 'shift'];
+
+export function keyboardModifiers(event: AnyEvent) {
+  if (event instanceof KeyboardEvent) {
+    const systemModifiers = systemKeys
+      .filter((key) => event[`${key}Key` as keyof KeyboardEvent])
+      .join('.');
+    return `${systemModifiers.length > 0 ? '.' : ''}${systemModifiers}.${event.code.toLowerCase()}`;
+  }
+  return '';
 }
 
 export class PropertyChangeEvent {
