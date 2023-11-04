@@ -74,17 +74,15 @@ export class ProgressiveElement extends HTMLElement implements EventListenerObje
   constructor() {
     super();
 
-    // TODO initialize properties for properties
     const constructor = this.constructor as typeof ProgressiveElement;
 
     constructor.delegatedEvents?.forEach((event) => this.addEventListener(event, this));
   }
 
-  // TODO: parse attributes into properties
+  // TODO: parse attributes into properties?
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
     this.handleEvent(new PropertyChangeEvent(name, oldValue, newValue));
   }
 
-  // @ts-ignore
-  handleEvent(event: AnyEvent): void {}
+  handleEvent(_event: AnyEvent): void {}
 }

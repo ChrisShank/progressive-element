@@ -37,6 +37,7 @@ class TodoApp extends ProgressiveElement {
       }
       case 'REMOVE_TODO': {
         target.closest('li')?.remove();
+        this.updateItemsLeft();
         break;
       }
       case 'TODO_TOGGLED': {
@@ -82,8 +83,8 @@ class TodoApp extends ProgressiveElement {
   }
 
   updateItemsLeft() {
-    const count = this.querySelectorAll('#todos input[type="checkbox"]:not(:checked)').length;
-    this.count.textContent = count.toString();
+    const todosCount = this.querySelectorAll('#todos input[type="checkbox"]:not(:checked)').length;
+    this.count.textContent = todosCount.toString();
   }
 
   persistTodos() {
