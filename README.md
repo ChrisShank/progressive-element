@@ -1,1 +1,1 @@
-# TodoMVC
+# TodoMVC for the component anarchists
