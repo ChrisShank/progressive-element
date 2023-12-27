@@ -3,55 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Todo MVC</title>
-    <script type="module" src="./src/main.ts"></script>
-    <link rel="stylesheet" href="./src/main.css" />
+    <title>Patterns for simplifying websites</title>
   </head>
   <body>
-    <todo-app>
-      <header>
-        <h1>todos</h1>
-      </header>
-
-      <main>
-        <form on:submit="ADD_TODO">
-          <label for="new-todo"> What needs to be done? </label>
-          <input type="text" name="new-todo" id="new-todo" autofocus />
-          <button type="submit">+</button>
-        </form>
-
-        <section>
-          <ul id="filters">
-            <li>
-              <a href="#all" on:click="FILTER" filter="all">All</a>
-            </li>
-            <li>
-              <a href="#active" on:click="FILTER" filter="active">Active</a>
-            </li>
-            <li>
-              <a href="#completed" on:click="FILTER" filter="completed">Completed</a>
-            </li>
-          </ul>
-          <ul id="todos"></ul>
-          <footer>
-            <span><span id="todo-count">0</span> items left</span>
-            <button on:click="MARK_ALL_COMPLETED">Mark all as complete</button>
-            <button on:click="CLEAR_COMPLETED">Clear completed</button>
-          </footer>
-        </section>
-      </main>
-    </todo-app>
-    <footer>
-      <p>Written by <a href="http://twitter.com/lukeed05">Chris Shank</a></p>
-      <p>Part of <a href="http://todomvc.com">TodoMVC</a></p>
-    </footer>
-
-    <template id="todo-template">
-      <li>
-        <input type="checkbox" on:change="TODO_TOGGLED" />
-        <input type="text" />
-        <button on:click="REMOVE_TODO">✕</button>
-      </li>
-    </template>
+    <h1>Examples</h1>
+    <nav>
+      <ul>
+        <li><a href="/examples/1-counter.html">Counter</a></li>
+        <li><a href="/examples/2-tempurature.html">Temperature</a></li>
+        <li><a href="/examples/3-flights.html">Flights</a></li>
+        <li><a href="/examples/4-timer.html">Timer</a></li>
+        <li><a href="/examples/5-crud.html">CRUD</a></li>
+        <li><a href="/examples/6-sircles.html">Circles</a></li>
+        <li><a href="/examples/7-cells.html">Cells</a></li>
+        <li><a href="/examples/todo-mvc.html">Todo MVC</a></li>
+      </ul>
+    </nav>
   </body>
 </html>
