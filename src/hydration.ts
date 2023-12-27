@@ -3,6 +3,10 @@ type CustomElementImports = Record<string, () => Promise<any>>;
 // Assume that JS module is deferred so that the DOM is loaded.
 // Using DOMContentLoaded is blocked by executing all of the scripts
 
+/**
+ * Once the browser is idle, dynamically import custom elements with a `hydrate:idle` attribute.
+ * @param customElementImports A record or custom element names to a dynamic import that defines it.
+ */
 function hydrateOnIdle(customElementImports: CustomElementImports) {
   const tagsToLoad = new Set<string>();
   document.querySelectorAll('[hydrate\\:idle]').forEach((el) => {
@@ -19,6 +23,10 @@ function hydrateOnIdle(customElementImports: CustomElementImports) {
   });
 }
 
+/**
+ * Once a custom element becomes visible, dynamically import the custom elements with a `hydrate:visible` attribute.
+ * @param customElementImports A record of custom element names to a dynamic import that defines it.
+ */
 function hydrateOnVisible(customElementImports: CustomElementImports) {
   const intersectionObserver = new IntersectionObserver((entries, observer) => {
     entries.forEach((entry) => {
@@ -38,6 +46,11 @@ function hydrateOnVisible(customElementImports: CustomElementImports) {
   });
 }
 
+// TODO: make more generic
+/**
+ * Once a custom element is clicked on, dynamically import the custom elements with a `hydrate:interaction` attribute.
+ * @param customElementImports A record of custom element names to a dynamic import that defines it.
+ */
 function hydrateOnInteraction(customElementImports: CustomElementImports) {
   const numberOfCustomElementsToImport = Object.keys(customElementImports).length;
   const tagsLoaded = new Set<string>();

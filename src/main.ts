@@ -1,4 +1,5 @@
-import { AnyEvent, ProgressiveElement, findClosestIntention } from './progressive-element';
+import { findClosestIntention } from './intentions';
+import { ProgressiveElement } from './progressive-element';
 
 interface Todo {
   text: string;
@@ -26,7 +27,7 @@ class TodoApp extends ProgressiveElement {
     }
   }
 
-  handleEvent(event: AnyEvent) {
+  handleEvent(event: Event) {
     const { intention, target } = findClosestIntention(event);
 
     switch (intention) {
