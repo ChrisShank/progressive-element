@@ -26,7 +26,7 @@
       countSpan = this.querySelector('[slot="count"]');
 
       handleEvent(event) {
-        const { intention, target } = findClosestIntention(event);
+        const { intention } = findClosestIntention(event);
 
         switch (intention) {
           case 'INCREMENT': {

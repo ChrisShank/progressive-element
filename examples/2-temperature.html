@@ -5,11 +5,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Temperature</title>
   </head>
-  <body></body>
+  <body>
+    <h1>Temperature Converter</h1>
+    <temperature-converter>
+      <label for="celsius">Celsius</label>
+      <input name="celsius" type="number" on:input="UPDATE_CELSIUS" />
+
+      <span>=</span>
+
+      <label for="fahrenheit">Fahrenheit</label>
+      <input name="fahrenheit" type="number" on:input="UPDATE_FAHRENHEIT" />
+    </temperature-converter>
+  </body>
 
   <script type="module">
     import { findClosestIntention } from '../src/intentions';
     import { ProgressiveElement } from '../src/progressive-element';
+
+    class TemperatureConverter extends ProgressiveElement {
+      static tagName = 'temperature-converter';
+
+      static delegatedEvents = ['input'];
+
+      celsiusInput = this.querySelector('input[name="celsius"]');
+      fahrenheitInput = this.querySelector('input[name="fahrenheit"]');
+
+      handleEvent(event) {
+        const { intention, target } = findClosestIntention(event);
+
+        switch (intention) {
+          case 'UPDATE_CELSIUS': {
+            if (Number.isNaN(this.celsiusInput.valueAsNumber)) return;
+            this.fahrenheitInput.valueAsNumber = this.celsiusInput.valueAsNumber * (9 / 5) + 32;
+            break;
+          }
+          case 'UPDATE_FAHRENHEIT': {
+            if (Number.isNaN(this.fahrenheitInput.valueAsNumber)) return;
+            this.celsiusInput.valueAsNumber = (this.fahrenheitInput.valueAsNumber - 32) * (5 / 9);
+            break;
+          }
+        }
+      }
+    }
+
+    TemperatureConverter.register();
   </script>
 
   <style>
