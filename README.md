@@ -1,4 +1,4 @@
-# Progresive Element
+# Patterns for simplifying websites
 
 Here lies some explorations about subtracting the "default web tooling" while maintaining similar affordances. Currently the classic TODO MVC is implemented to prove out these patterns:
 
