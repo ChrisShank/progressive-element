@@ -5,11 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Counter</title>
   </head>
-  <body></body>
+  <body>
+    <h1>Counter</h1>
+    <count-er>
+      <span slot="count">0</span>
+      <button on:click="INCREMENT">+</button>
+    </count-er>
+  </body>
 
   <script type="module">
     import { findClosestIntention } from '../src/intentions';
     import { ProgressiveElement } from '../src/progressive-element';
+
+    class Counter extends ProgressiveElement {
+      static tagName = 'count-er';
+
+      static delegatedEvents = ['click'];
+
+      count = 0;
+      countSpan = this.querySelector('[slot="count"]');
+
+      handleEvent(event) {
+        const { intention, target } = findClosestIntention(event);
+
+        switch (intention) {
+          case 'INCREMENT': {
+            this.countSpan.textContent = ++this.count;
+            return;
+          }
+        }
+      }
+    }
+
+    Counter.register();
   </script>
 
   <style>
@@ -17,30 +45,12 @@
       box-sizing: border-box;
     }
 
-    html,
-    body {
-      margin: 0;
-      padding: 0;
-    }
-
-    button {
-      margin: 0;
-      padding: 0;
-      border: 0;
-      background: none;
-      font-size: 100%;
-      vertical-align: baseline;
-      font-family: inherit;
-      font-weight: inherit;
-      color: inherit;
-      -webkit-appearance: none;
-      appearance: none;
-      cursor: pointer;
-      line-height: 1;
-      color: #777;
-
-      &:hover {
-        color: black;
+    count-er {
+      [slot='count'] {
+        display: inline-block;
+        min-width: 3rem;
+        border: 1px black solid;
+        padding: 0 0.25rem;
       }
     }
   </style>

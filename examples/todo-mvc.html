@@ -58,6 +58,8 @@
     import { ProgressiveElement } from '../src/progressive-element';
 
     class TodoApp extends ProgressiveElement {
+      static tagName = 'todo-app';
+
       static delegatedEvents = ['click', 'submit', 'change'];
 
       newTodo = this.querySelector('#new-todo');

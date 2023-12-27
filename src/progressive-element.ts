@@ -3,10 +3,6 @@ export interface AnyEvent {
   [key: string]: any;
 }
 
-function kebabize(str: string) {
-  return str.replace(/[A-Z]+(?![a-z])|[A-Z]/g, ($, ofs) => (ofs ? '-' : '') + $.toLowerCase());
-}
-
 // Any string is valid, but we can provide auto-complete for built-in event.
 type AnyEventType = keyof HTMLElementEventMap | (string & {});
 
@@ -14,11 +10,13 @@ type AnyEventType = keyof HTMLElementEventMap | (string & {});
  * A tiny base class to define custom elements with. It provides a static `register` method and delegates events based on the `delegatedEvents` static property. All delegated events are called with the `handleEvent` method.
  */
 export class ProgressiveElement extends HTMLElement implements EventListenerObject {
+  static tagName = '';
   /**
    * Register the custom element with the window. By default then name of the custom element is the kebab-case of the class name.
    */
   static register() {
-    customElements.define(kebabize(this.name), this);
+    if (!this.tagName) throw new Error('`tagName` must be defined as a static property.');
+    customElements.define(this.tagName, this);
   }
 
   /**
