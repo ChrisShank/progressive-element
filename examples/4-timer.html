@@ -11,7 +11,7 @@
     <progress-timer>
       <span>
         Elapsed Time:
-        <progress value="0" min="0" max="100"></progress>
+        <progress value="0" min="0" max="5"></progress>
         <span slot="time">0.0</span>s
       </span>
       <span>
@@ -49,13 +49,7 @@
       }
 
       startTimer() {
-        this.timer = setInterval(() => {
-          if (this.time >= this.duration) {
-            this.stopTimer();
-          } else {
-            this.tick();
-          }
-        }, 100);
+        this.timer = setInterval(() => this.tick(), 10);
       }
 
       stopTimer() {
@@ -63,10 +57,10 @@
         this.timer = null;
       }
 
-      tick(elapsed = 0.1) {
-        this.time = Math.min(this.time + elapsed, this.duration);
+      tick() {
+        this.time = Math.min(this.time + 0.01, this.duration);
         this.timeSlot.textContent = this.time.toFixed(1);
-        this.progress.value = (this.time / this.duration) * 100;
+        this.progress.value = this.time;
       }
 
       handleEvent(event) {
@@ -74,7 +68,7 @@
 
         switch (intention) {
           case 'UPDATE_DURATION': {
-            this.tick(0);
+            this.progress.max = this.duration;
 
             if (this.timer === null) {
               this.startTimer();
@@ -84,7 +78,6 @@
           case 'RESET': {
             this.stopTimer();
             this.time = 0;
-            this.tick(0);
             this.startTimer();
             return;
           }
