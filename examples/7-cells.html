@@ -19,18 +19,15 @@
 
       connectedCallback() {
         let html = '<spreadsheet-header></spreadsheet-header>';
-        for (let i = 0; i < 100; i += 1) {
-          const name = this.getColumnName(i);
-          html += `<spreadsheet-header type="column">${name}</spreadsheet-header>`;
+        for (let i = 0; i < 26; i += 1) {
+          html += `<spreadsheet-header type="column">${this.getColumnName(i)}</spreadsheet-header>`;
         }
 
         for (let i = 0; i < 100; i += 1) {
           html += `<spreadsheet-header type="row">${i}</spreadsheet-header>`;
-          for (let j = 0; j < 100; j += 1) {
+          for (let j = 0; j < 26; j += 1) {
             const name = this.getColumnName(j) + i;
-            html += `<spreadsheet-cell name="${name}" on:evaluate="REEVALUATE">
-  <input type="text" on:focusin="EDIT_CELL" on:focusout="UPDATE_EXPRESSION" />
-</spreadsheet-cell>`;
+            html += `<spreadsheet-cell name="${name}" on:evaluate="REEVALUATE"><input type="text" on:focusin="EDIT_CELL" on:focusout="UPDATE_EXPRESSION" /></spreadsheet-cell>`;
           }
         }
 
@@ -38,9 +35,7 @@
       }
 
       getColumnName(index) {
-        const letter = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[index % 26];
-        const quotient = Math.floor(index / 26);
-        return quotient > 0 ? this.getColumnName(quotient - 1) + letter : letter;
+        return 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[index % 26];
       }
     }
 
@@ -74,52 +69,35 @@
               this.input.setCustomValidity('');
             }
 
-            this.updateFormula(this.input.value);
+            this.formula = this.input.value.toUpperCase();
+
+            this.dependencies.forEach((dep) => dep.removeEventListener('evaluate', this));
+
+            this.dependencies = (this.formula.match(/[A-Z]+\d+/g) ?? []).map((dep) =>
+              document.querySelector(`spreadsheet-cell[name="${dep}"]`)
+            );
+
+            this.dependencies.forEach((dep) => dep.addEventListener('evaluate', this));
           }
           case 'REEVALUATE': {
             try {
-              this.value = this.evaluateFormula(this.formula);
-              this.input.value = this.value ?? '';
+              let formula = this.formula;
+
+              for (const cell of this.dependencies) {
+                formula = formula.replaceAll(cell.name, cell.value);
+              }
+
+              // TODO: unsafe eval, write custom interpreter?
+              this.input.value = this.value = eval(formula) ?? NaN;
               this.dispatchEvent(
-                new CustomEvent('evaluate', {
-                  detail: this.value,
-                  cancelable: false,
-                  bubbles: false,
-                })
+                new CustomEvent('evaluate', { cancelable: false, bubbles: false })
               );
-            } catch (error) {
+            } catch {
               this.input.setCustomValidity('Invalid formula.');
               this.input.reportValidity();
             }
-            return;
           }
         }
-      }
-
-      updateFormula(formula) {
-        this.formula = formula.toUpperCase();
-
-        // TODO: only remove deps that aren't needed?
-        for (const dep of this.dependencies) {
-          dep.removeEventListener('evaluate', this);
-        }
-
-        this.dependencies = (this.formula.match(/[A-Z]+\d+/g) ?? []).map((dep) =>
-          document.querySelector(`spreadsheet-cell[name="${dep}"]`)
-        );
-
-        for (const dep of this.dependencies) {
-          dep.addEventListener('evaluate', this);
-        }
-      }
-
-      evaluateFormula(formula) {
-        for (const cell of this.dependencies) {
-          formula = formula.replace(cell.name, cell.value);
-        }
-
-        // TODO: unsafe eval, write custom interpreter?
-        return eval(formula);
       }
     }
 
@@ -140,7 +118,7 @@
 
     spreadsheet-app {
       display: grid;
-      grid-template-columns: repeat(101, 100px);
+      grid-template-columns: repeat(27, 100px);
       grid-template-rows: repeat(101, 1.75rem);
     }
 
@@ -151,11 +129,7 @@
     }
 
     spreadsheet-cell {
-      border: 0.25px solid black;
-    }
-
-    spreadsheet-cell:focus-within {
-      border-width: 2px;
+      border: 0.5px solid black;
     }
 
     spreadsheet-cell > input {
