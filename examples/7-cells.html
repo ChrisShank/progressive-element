@@ -69,14 +69,28 @@
           case 'UPDATE_EXPRESSION': {
             if (this.formula === this.input.value) return;
 
+            // If there is a custom error then reset it.
+            if (this.input.validity.customError) {
+              this.input.setCustomValidity('');
+            }
+
             this.updateFormula(this.input.value);
           }
           case 'REEVALUATE': {
-            this.value = this.evaluateFormula(this.formula);
-            this.input.value = this.value ?? '';
-            this.dispatchEvent(
-              new CustomEvent('evaluate', { detail: this.value, cancelable: false })
-            );
+            try {
+              this.value = this.evaluateFormula(this.formula);
+              this.input.value = this.value ?? '';
+              this.dispatchEvent(
+                new CustomEvent('evaluate', {
+                  detail: this.value,
+                  cancelable: false,
+                  bubbles: false,
+                })
+              );
+            } catch (error) {
+              this.input.setCustomValidity('Invalid formula.');
+              this.input.reportValidity();
+            }
             return;
           }
         }
@@ -90,7 +104,7 @@
           dep.removeEventListener('evaluate', this);
         }
 
-        this.dependencies = (this.formula.match(/[A-Z+][\d+]/g) ?? []).map((dep) =>
+        this.dependencies = (this.formula.match(/[A-Z]+\d+/g) ?? []).map((dep) =>
           document.querySelector(`spreadsheet-cell[name="${dep}"]`)
         );
 

@@ -10,6 +10,14 @@
   <script type="module">
     import { findClosestIntention } from '../src/intentions';
     import { ProgressiveElement } from '../src/progressive-element';
+
+    class CounTer extends ProgressiveElement {
+      static delegatedEvents = ['click'];
+
+      handleEvent(event) {
+        const { intention, target } = findClosestIntention(event);
+      }
+    }
   </script>
 
   <style>

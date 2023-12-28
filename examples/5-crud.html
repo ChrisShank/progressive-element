@@ -10,6 +10,22 @@
   <script type="module">
     import { findClosestIntention } from '../src/intentions';
     import { ProgressiveElement } from '../src/progressive-element';
+
+    class CRUD extends ProgressiveElement {
+      static delegatedEvents = ['click'];
+
+      handleEvent(event) {
+        const { intention, target } = findClosestIntention(event);
+
+        switch (intention) {
+          case '': {
+            return;
+          }
+        }
+      }
+    }
+
+    CRUD.register();
   </script>
 
   <style>
