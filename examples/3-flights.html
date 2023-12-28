@@ -5,11 +5,79 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Flights</title>
   </head>
-  <body></body>
+  <body>
+    <h1>Flight Booker</h1>
+
+    <flight-booker>
+      <select on:input="SELECT_OPTION">
+        <option value="one-way">one-way flight</option>
+        <option value="return">return flight</option>
+      </select>
+
+      <input type="date" name="start-date" value="2023-12-27" on:input="UPDATE_DATE" />
+      <input type="date" name="return-date" value="2023-12-27" disabled on:input="UPDATE_DATE" />
+
+      <button on:click="BOOK">Book</button>
+    </flight-booker>
+  </body>
 
   <script type="module">
     import { findClosestIntention } from '../src/intentions';
     import { ProgressiveElement } from '../src/progressive-element';
+
+    class FlightBooker extends ProgressiveElement {
+      static tagName = 'flight-booker';
+      static delegatedEvents = ['input', 'click'];
+
+      selectInput = this.querySelector('select');
+      startDateInput = this.querySelector('input[name="start-date"]');
+      returnDateInput = this.querySelector('input[name="return-date"]');
+      bookButton = this.querySelector('button');
+
+      validateDateInputs() {
+        if (this.selectInput.value === 'return') {
+          if (this.returnDateInput.valueAsDate < this.startDateInput.valueAsDate) {
+            this.bookButton.disabled = true;
+            this.returnDateInput.setCustomValidity('Return date must be after the start date.');
+            this.returnDateInput.reportValidity();
+            return;
+          }
+        }
+        this.bookButton.disabled = false;
+      }
+
+      handleEvent(event) {
+        const { intention, target } = findClosestIntention(event);
+
+        switch (intention) {
+          case 'SELECT_OPTION': {
+            if (target.value === 'one-way') {
+              this.returnDateInput.disabled = true;
+            } else {
+              this.returnDateInput.disabled = false;
+            }
+            this.validateDateInputs();
+            return;
+          }
+          case 'UPDATE_DATE': {
+            this.validateDateInputs();
+            return;
+          }
+          case 'BOOK': {
+            if (this.selectInput.value === 'one-way') {
+              alert(`You have booked a one-way flight on ${this.startDateInput.value}.`);
+            } else {
+              alert(
+                `You have booked a return flight from ${this.startDateInput.value} to ${this.returnDateInput.value}.`
+              );
+            }
+            return;
+          }
+        }
+      }
+    }
+
+    FlightBooker.register();
   </script>
 
   <style>
@@ -23,25 +91,11 @@
       padding: 0;
     }
 
-    button {
-      margin: 0;
-      padding: 0;
-      border: 0;
-      background: none;
-      font-size: 100%;
-      vertical-align: baseline;
-      font-family: inherit;
-      font-weight: inherit;
-      color: inherit;
-      -webkit-appearance: none;
-      appearance: none;
-      cursor: pointer;
-      line-height: 1;
-      color: #777;
-
-      &:hover {
-        color: black;
-      }
+    flight-booker {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
     }
   </style>
 </html>
