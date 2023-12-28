@@ -5,11 +5,90 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Timer</title>
   </head>
-  <body></body>
+  <body>
+    <h1>Timer</h1>
+
+    <progress-timer>
+      <span>
+        Elapsed Time:
+        <progress value="0" min="0" max="100"></progress>
+        <span slot="time">0.0</span>s
+      </span>
+      <span>
+        Duration
+        <input name="duration" type="range" min="2" max="15" value="5" on:input="UPDATE_DURATION" />
+      </span>
+      <button on:click="RESET">Reset</button>
+    </progress-timer>
+  </body>
 
   <script type="module">
     import { findClosestIntention } from '../src/intentions';
     import { ProgressiveElement } from '../src/progressive-element';
+
+    class ProgressTimer extends ProgressiveElement {
+      static tagName = 'progress-timer';
+      static delegatedEvents = ['click', 'input'];
+
+      time = 0;
+      timeSlot = this.querySelector('[slot="time"]');
+      progress = this.querySelector('progress');
+      duration = this.querySelector('input[name="duration"]');
+      timer = null;
+
+      connectedCallback() {
+        this.startTimer();
+      }
+
+      disconnectedCallback() {
+        this.stopTimer();
+      }
+
+      startTimer() {
+        this.timer = setInterval(() => {
+          if (this.time >= this.duration.valueAsNumber) {
+            this.stopTimer();
+          } else {
+            this.time += 0.1;
+            this.updateProgress();
+          }
+        }, 100);
+      }
+
+      stopTimer() {
+        clearInterval(this.timer);
+        this.timer = null;
+      }
+
+      updateProgress() {
+        this.timeSlot.textContent = this.time.toFixed(1);
+        this.progress.value = (this.time / this.duration.valueAsNumber) * 100;
+      }
+
+      handleEvent(event) {
+        const { intention, target } = findClosestIntention(event);
+
+        switch (intention) {
+          case 'UPDATE_DURATION': {
+            this.updateProgress();
+
+            if (this.timer === null) {
+              this.startTimer();
+            }
+            return;
+          }
+          case 'RESET': {
+            this.stopTimer();
+            this.time = 0;
+            this.updateProgress();
+            this.startTimer();
+            return;
+          }
+        }
+      }
+    }
+
+    ProgressTimer.register();
   </script>
 
   <style>
@@ -23,25 +102,11 @@
       padding: 0;
     }
 
-    button {
-      margin: 0;
-      padding: 0;
-      border: 0;
-      background: none;
-      font-size: 100%;
-      vertical-align: baseline;
-      font-family: inherit;
-      font-weight: inherit;
-      color: inherit;
-      -webkit-appearance: none;
-      appearance: none;
-      cursor: pointer;
-      line-height: 1;
-      color: #777;
-
-      &:hover {
-        color: black;
-      }
+    progress-timer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
     }
   </style>
 </html>
