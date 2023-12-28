@@ -47,6 +47,7 @@
       formula = '';
       value = NaN;
       dependencies = [];
+      invalidated = false;
 
       get name() {
         return this.getAttribute('name');
@@ -54,7 +55,10 @@
 
       handleEvent(event) {
         const { intention, target } = findClosestIntention(event);
+        this.handleIntention(intention);
+      }
 
+      handleIntention(intention) {
         switch (intention) {
           case 'EDIT_CELL': {
             this.input.value = this.formula;
@@ -79,15 +83,16 @@
 
             this.dependencies.forEach((dep) => dep.addEventListener('evaluate', this));
           }
-          case 'REEVALUATE': {
+          case 'EVALUATE': {
             try {
+              this.invalidated = false;
               let formula = this.formula;
 
               for (const cell of this.dependencies) {
                 formula = formula.replaceAll(cell.name, cell.value);
               }
 
-              // TODO: unsafe eval, write custom interpreter?
+              // TODO: unsafe eval, write custom parser/interpreter?
               this.input.value = this.value = eval(formula) ?? NaN;
               this.dispatchEvent(
                 new CustomEvent('evaluate', { cancelable: false, bubbles: false })
@@ -95,7 +100,16 @@
             } catch {
               this.input.setCustomValidity('Invalid formula.');
               this.input.reportValidity();
+            } finally {
+              return;
             }
+          }
+          // Once invalidated this cell only needs to be evaluate once
+          case 'REEVALUATE': {
+            if (this.invalidated) return;
+            this.invalidated = true;
+            queueMicrotask(() => this.handleIntention('EVALUATE'));
+            return;
           }
         }
       }
