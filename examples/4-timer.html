@@ -33,8 +33,12 @@
       time = 0;
       timeSlot = this.querySelector('[slot="time"]');
       progress = this.querySelector('progress');
-      duration = this.querySelector('input[name="duration"]');
+      durationInput = this.querySelector('input[name="duration"]');
       timer = null;
+
+      get duration() {
+        return this.durationInput.valueAsNumber;
+      }
 
       connectedCallback() {
         this.startTimer();
@@ -46,11 +50,10 @@
 
       startTimer() {
         this.timer = setInterval(() => {
-          if (this.time >= this.duration.valueAsNumber) {
+          if (this.time >= this.duration) {
             this.stopTimer();
           } else {
-            this.time += 0.1;
-            this.updateProgress();
+            this.tick();
           }
         }, 100);
       }
@@ -60,9 +63,10 @@
         this.timer = null;
       }
 
-      updateProgress() {
+      tick(elapsed = 0.1) {
+        this.time = Math.min(this.time + elapsed, this.duration);
         this.timeSlot.textContent = this.time.toFixed(1);
-        this.progress.value = (this.time / this.duration.valueAsNumber) * 100;
+        this.progress.value = (this.time / this.duration) * 100;
       }
 
       handleEvent(event) {
@@ -70,7 +74,7 @@
 
         switch (intention) {
           case 'UPDATE_DURATION': {
-            this.updateProgress();
+            this.tick(0);
 
             if (this.timer === null) {
               this.startTimer();
@@ -80,7 +84,7 @@
           case 'RESET': {
             this.stopTimer();
             this.time = 0;
-            this.updateProgress();
+            this.tick(0);
             this.startTimer();
             return;
           }
