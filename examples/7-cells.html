@@ -5,11 +5,112 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Cells</title>
   </head>
-  <body></body>
+  <body>
+    <spreadsheet-app></spreadsheet-app>
+  </body>
 
   <script type="module">
     import { findClosestIntention } from '../src/intentions';
     import { ProgressiveElement } from '../src/progressive-element';
+
+    // This custom element is mainly just templating the spreadsheet.
+    class SpreadsheetApp extends ProgressiveElement {
+      static tagName = 'spreadsheet-app';
+
+      connectedCallback() {
+        let html = '<spreadsheet-header></spreadsheet-header>';
+        for (let i = 0; i < 100; i += 1) {
+          const name = this.getColumnName(i);
+          html += `<spreadsheet-header type="column">${name}</spreadsheet-header>`;
+        }
+
+        for (let i = 0; i < 100; i += 1) {
+          html += `<spreadsheet-header type="row">${i}</spreadsheet-header>`;
+          for (let j = 0; j < 100; j += 1) {
+            const name = this.getColumnName(j) + i;
+            html += `<spreadsheet-cell name="${name}" on:evaluate="REEVALUATE">
+  <input type="text" on:focusin="EDIT_CELL" on:focusout="UPDATE_EXPRESSION" />
+</spreadsheet-cell>`;
+          }
+        }
+
+        this.innerHTML = html;
+      }
+
+      getColumnName(index) {
+        const letter = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[index % 26];
+        const quotient = Math.floor(index / 26);
+        return quotient > 0 ? this.getColumnName(quotient - 1) + letter : letter;
+      }
+    }
+
+    class SpreadsheetCell extends ProgressiveElement {
+      static tagName = 'spreadsheet-cell';
+      static delegatedEvents = ['focusin', 'focusout'];
+
+      input = this.querySelector('input');
+      formula = '';
+      value = NaN;
+      dependencies = [];
+
+      get name() {
+        return this.getAttribute('name');
+      }
+
+      handleEvent(event) {
+        const { intention, target } = findClosestIntention(event);
+
+        switch (intention) {
+          case 'EDIT_CELL': {
+            this.input.value = this.formula;
+            return;
+          }
+          // Let this case intentionally fall through
+          case 'UPDATE_EXPRESSION': {
+            if (this.formula === this.input.value) return;
+
+            this.updateFormula(this.input.value);
+          }
+          case 'REEVALUATE': {
+            this.value = this.evaluateFormula(this.formula);
+            this.input.value = this.value ?? '';
+            this.dispatchEvent(
+              new CustomEvent('evaluate', { detail: this.value, cancelable: false })
+            );
+            return;
+          }
+        }
+      }
+
+      updateFormula(formula) {
+        this.formula = formula.toUpperCase();
+
+        // TODO: only remove deps that aren't needed?
+        for (const dep of this.dependencies) {
+          dep.removeEventListener('evaluate', this);
+        }
+
+        this.dependencies = (this.formula.match(/[A-Z+][\d+]/g) ?? []).map((dep) =>
+          document.querySelector(`spreadsheet-cell[name="${dep}"]`)
+        );
+
+        for (const dep of this.dependencies) {
+          dep.addEventListener('evaluate', this);
+        }
+      }
+
+      evaluateFormula(formula) {
+        for (const cell of this.dependencies) {
+          formula = formula.replace(cell.name, cell.value);
+        }
+
+        // TODO: unsafe eval, write custom interpreter?
+        return eval(formula);
+      }
+    }
+
+    SpreadsheetApp.register();
+    SpreadsheetCell.register();
   </script>
 
   <style>
@@ -23,25 +124,30 @@
       padding: 0;
     }
 
-    button {
-      margin: 0;
-      padding: 0;
-      border: 0;
-      background: none;
-      font-size: 100%;
-      vertical-align: baseline;
-      font-family: inherit;
-      font-weight: inherit;
-      color: inherit;
-      -webkit-appearance: none;
-      appearance: none;
-      cursor: pointer;
-      line-height: 1;
-      color: #777;
+    spreadsheet-app {
+      display: grid;
+      grid-template-columns: repeat(101, 100px);
+      grid-template-rows: repeat(101, 1.75rem);
+    }
 
-      &:hover {
-        color: black;
-      }
+    spreadsheet-header {
+      background-color: rgb(226, 226, 226);
+      border: 1px solid black;
+      padding: 0.125rem 0.5rem;
+    }
+
+    spreadsheet-cell {
+      border: 0.25px solid black;
+    }
+
+    spreadsheet-cell:focus-within {
+      border-width: 2px;
+    }
+
+    spreadsheet-cell > input {
+      padding: 0.125rem 0.5rem;
+      width: 100%;
+      height: 100%;
     }
   </style>
 </html>
