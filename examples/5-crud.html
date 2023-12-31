@@ -10,32 +10,7 @@
       <span slot="filter">Filter: <input type="text" on:input="FILTER_CONTACTS" /></span>
 
       <span slot="form">
-        <fieldset slot="contacts">
-          <label
-            ><input
-              type="radio"
-              name="selected-contact"
-              value="Emil, Hans"
-              on:input="CONTACT_SELECTED"
-            />Emil, Hans</label
-          >
-          <label
-            ><input
-              type="radio"
-              name="selected-contact"
-              value="Mustermann, Max"
-              on:input="CONTACT_SELECTED"
-            />Mustermann, Max</label
-          >
-          <label
-            ><input
-              type="radio"
-              name="selected-contact"
-              value="Tisch, Roman"
-              on:input="CONTACT_SELECTED"
-            />Tisch, Roman</label
-          >
-        </fieldset>
+        <fieldset slot="contacts"></fieldset>
 
         <span slot="inputs">
           <label>Name: <input type="text" name="name" on:input="UPDATE_NAME" /></label>
@@ -59,29 +34,28 @@
       static tagName = 'contact-list';
       static delegatedEvents = ['input', 'click'];
 
-      sheet = new CSSStyleSheet();
+      filter = '';
       fieldset = this.querySelector('fieldset');
       nameInput = this.querySelector('input[name="name"]');
       surnameInput = this.querySelector('input[name="surname"]');
       selectedContact = null;
-
-      connectedCallback() {
-        document.adoptedStyleSheets.push(this.sheet);
-      }
 
       handleEvent(event) {
         const { intention, target } = findClosestIntention(event);
         switch (intention) {
           // Use DOM to filter instead?
           case 'FILTER_CONTACTS': {
-            const filter = target.value || '';
-            if (filter) {
-              this.sheet.replace(
-                `contact-list fieldset label:has(input:not([value*='${filter}' i])) { display: none; }`
-              );
-            } else {
-              this.sheet.replace('');
+            this.querySelectorAll('fieldset label[hidden]').forEach((label) =>
+              label.removeAttribute('hidden')
+            );
+
+            this.filter = target.value || '';
+            if (this.filter) {
+              this.querySelectorAll(
+                `fieldset label:has(input:not([value*='${this.filter}' i]))`
+              ).forEach((label) => label.setAttribute('hidden', ''));
             }
+
             return;
           }
           case 'CONTACT_SELECTED': {
