@@ -5,27 +5,152 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Crud</title>
   </head>
-  <body></body>
+  <body>
+    <contact-list>
+      <span slot="filter">Filter: <input type="text" on:input="FILTER_CONTACTS" /></span>
+
+      <span slot="form">
+        <fieldset slot="contacts">
+          <label
+            ><input
+              type="radio"
+              name="selected-contact"
+              value="Emil, Hans"
+              on:input="CONTACT_SELECTED"
+            />Emil, Hans</label
+          >
+          <label
+            ><input
+              type="radio"
+              name="selected-contact"
+              value="Mustermann, Max"
+              on:input="CONTACT_SELECTED"
+            />Mustermann, Max</label
+          >
+          <label
+            ><input
+              type="radio"
+              name="selected-contact"
+              value="Tisch, Roman"
+              on:input="CONTACT_SELECTED"
+            />Tisch, Roman</label
+          >
+        </fieldset>
+
+        <span slot="inputs">
+          <label>Name: <input type="text" name="name" on:input="UPDATE_NAME" /></label>
+          <label>Surname: <input type="text" name="surname" on:input="UPDATE_SURNAME" /></label>
+        </span>
+      </span>
+
+      <span slot="buttons">
+        <button on:click="CREATE_CONTACT">Create</button>
+        <button on:click="UPDATE_CONTACT">Update</button>
+        <button on:click="DELETE_CONTACT">Delete</button>
+      </span>
+    </contact-list>
+  </body>
 
   <script type="module">
     import { findClosestIntention } from '../src/intentions';
     import { ProgressiveElement } from '../src/progressive-element';
 
-    class CRUD extends ProgressiveElement {
-      static delegatedEvents = ['click'];
+    class ContactList extends ProgressiveElement {
+      static tagName = 'contact-list';
+      static delegatedEvents = ['input', 'click'];
+
+      sheet = new CSSStyleSheet();
+      fieldset = this.querySelector('fieldset');
+      nameInput = this.querySelector('input[name="name"]');
+      surnameInput = this.querySelector('input[name="surname"]');
+      selectedContact = null;
+
+      connectedCallback() {
+        document.adoptedStyleSheets.push(this.sheet);
+      }
 
       handleEvent(event) {
         const { intention, target } = findClosestIntention(event);
-
         switch (intention) {
-          case '': {
+          // Use DOM to filter instead?
+          case 'FILTER_CONTACTS': {
+            const filter = target.value || '';
+            if (filter) {
+              this.sheet.replace(
+                `contact-list fieldset label:has(input:not([value*='${filter}' i])) { display: none; }`
+              );
+            } else {
+              this.sheet.replace('');
+            }
+            return;
+          }
+          case 'CONTACT_SELECTED': {
+            const [surname, name] = target.value.split(', ');
+            this.selectedContact = {
+              name,
+              surname,
+              input: target,
+            };
+            this.nameInput.value = name;
+            this.surnameInput.value = surname;
+            return;
+          }
+          case 'UPDATE_NAME': {
+            if (!this.selectedContact) return;
+            this.selectedContact.name = target.value;
+            return;
+          }
+          case 'UPDATE_SURNAME': {
+            if (!this.selectedContact) return;
+            this.selectedContact.surname = target.value;
+            return;
+          }
+          case 'CREATE_CONTACT': {
+            const name = this.nameInput.value;
+            const surname = this.surnameInput.value;
+            const label = document.createElement('label');
+            const input = document.createElement('input');
+            input.setAttribute('type', 'radio');
+            input.setAttribute('name', 'selected-contact');
+            input.setAttribute('on:input', 'CONTACT_SELECTED');
+            label.append(input);
+
+            this.selectedContact = {
+              name,
+              surname,
+              input: target,
+            };
+
+            const fullName = `${surname}, ${name}`;
+            input.setAttribute('value', fullName);
+
+            const text = document.createTextNode(fullName);
+            label.append(text);
+
+            this.fieldset.append(label);
+            return;
+          }
+          case 'UPDATE_CONTACT': {
+            if (!this.selectedContact) return;
+            const { input, name, surname } = this.selectedContact;
+            const fullName = `${surname}, ${name}`;
+            input.setAttribute('value', fullName);
+            input.nextSibling.textContent = fullName;
+            return;
+          }
+          case 'DELETE_CONTACT': {
+            if (!this.selectedContact) return;
+            this.selectedContact.input.parentElement.remove();
+            this.nameInput.value = '';
+            this.surnameInput.value = '';
+            this.selectedContact = null;
             return;
           }
         }
       }
     }
 
-    CRUD.register();
+    ContactList.register();
   </script>
 
   <style>
@@ -33,31 +158,32 @@
       box-sizing: border-box;
     }
 
-    html,
-    body {
-      margin: 0;
-      padding: 0;
+    contact-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
     }
 
-    button {
-      margin: 0;
-      padding: 0;
-      border: 0;
-      background: none;
-      font-size: 100%;
-      vertical-align: baseline;
-      font-family: inherit;
-      font-weight: inherit;
-      color: inherit;
-      -webkit-appearance: none;
-      appearance: none;
-      cursor: pointer;
-      line-height: 1;
-      color: #777;
+    contact-list > [slot='form'] {
+      display: flex;
+      gap: 1rem;
+    }
 
-      &:hover {
-        color: black;
-      }
+    contact-list fieldset {
+      display: flex;
+      flex-direction: column;
+      min-width: 12rem;
+    }
+
+    contact-list [slot='inputs'] {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    contact-list > [slot='buttons'] {
+      display: flex;
+      gap: 1rem;
     }
   </style>
 </html>
