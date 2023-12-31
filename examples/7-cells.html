@@ -16,6 +16,9 @@
     // This custom element is mainly just templating the spreadsheet.
     class SpreadsheetApp extends ProgressiveElement {
       static tagName = 'spreadsheet-app';
+      static delegatedEvents = ['focusin', 'focusout'];
+
+      cells = new Map();
 
       connectedCallback() {
         let html = '<spreadsheet-header></spreadsheet-header>';
@@ -27,7 +30,18 @@
           html += `<spreadsheet-header type="row">${i}</spreadsheet-header>`;
           for (let j = 0; j < 26; j += 1) {
             const name = this.getColumnName(j) + i;
-            html += `<spreadsheet-cell name="${name}" on:evaluate="REEVALUATE"><input type="text" on:focusin="EDIT_CELL" on:focusout="UPDATE_EXPRESSION" /></spreadsheet-cell>`;
+            this.cells.set(name, {
+              name,
+              value: NaN,
+              formula: '',
+              dependencies: [],
+              height: 0,
+              // TODO: optimize
+              get input() {
+                return document.querySelector(`input[name="${this.name}"]`);
+              },
+            });
+            html += `<input name="${name}" type="text" on:focusin="EDIT_CELL" on:focusout="UPDATE_EXPRESSION" />`;
           }
         }
 
@@ -37,86 +51,66 @@
       getColumnName(index) {
         return 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[index % 26];
       }
-    }
-
-    class SpreadsheetCell extends ProgressiveElement {
-      static tagName = 'spreadsheet-cell';
-      static delegatedEvents = ['focusin', 'focusout'];
-
-      input = this.querySelector('input');
-      formula = '';
-      value = NaN;
-      dependencies = [];
-      invalidated = false;
-
-      get name() {
-        return this.getAttribute('name');
-      }
 
       handleEvent(event) {
         const { intention, target } = findClosestIntention(event);
-        this.handleIntention(intention);
-      }
 
-      handleIntention(intention) {
         switch (intention) {
           case 'EDIT_CELL': {
-            this.input.value = this.formula;
+            const cell = this.cells.get(target.name);
+            target.value = cell.formula;
             return;
           }
-          // Let this case intentionally fall through
           case 'UPDATE_EXPRESSION': {
-            if (this.formula === this.input.value) return;
+            const cell = this.cells.get(target.name);
+            const newFormula = target.value.toUpperCase();
+
+            if (cell.formula === newFormula) return;
+
+            cell.formula = newFormula;
 
             // If there is a custom error then reset it.
-            if (this.input.validity.customError) {
-              this.input.setCustomValidity('');
+            if (target.validity.customError) {
+              target.setCustomValidity('');
             }
 
-            this.formula = this.input.value.toUpperCase();
-
-            this.dependencies.forEach((dep) => dep.removeEventListener('evaluate', this));
-
-            this.dependencies = (this.formula.match(/[A-Z]+\d+/g) ?? []).map((dep) =>
-              document.querySelector(`spreadsheet-cell[name="${dep}"]`)
+            cell.dependencies = (newFormula.match(/[A-Z]+\d+/g) ?? []).map((dep) =>
+              this.cells.get(dep)
             );
 
-            this.dependencies.forEach((dep) => dep.addEventListener('evaluate', this));
-          }
-          case 'EVALUATE': {
-            try {
-              this.invalidated = false;
-              let formula = this.formula;
+            this.updateCellHeight(cell);
 
-              for (const cell of this.dependencies) {
-                formula = formula.replaceAll(cell.name, cell.value);
-              }
-
-              // TODO: unsafe eval, write custom parser/interpreter?
-              this.input.value = this.value = eval(formula) ?? NaN;
-              this.dispatchEvent(
-                new CustomEvent('evaluate', { cancelable: false, bubbles: false })
-              );
-            } catch {
-              this.input.setCustomValidity('Invalid formula.');
-              this.input.reportValidity();
-            } finally {
-              return;
-            }
-          }
-          // Once invalidated this cell only needs to be evaluate once
-          case 'REEVALUATE': {
-            if (this.invalidated) return;
-            this.invalidated = true;
-            queueMicrotask(() => this.handleIntention('EVALUATE'));
             return;
           }
+        }
+      }
+
+      updateCellHeight(cell) {
+        cell.height =
+          cell.dependencies.length === 0
+            ? 0
+            : Math.max(...cell.dependencies.map((dep) => dep.height)) + 1;
+      }
+
+      topologicalSort(cell) {}
+
+      evaluateCell(cell) {
+        try {
+          let formula = cell.formula;
+          for (const cell of cell.dependencies) {
+            formula = formula.replaceAll(cell.name, cell.value);
+          }
+
+          // TODO: unsafe eval, write custom parser/interpreter?
+          cell.input.value = cell.value = eval(formula) ?? NaN;
+        } catch {
+          cell.input.setCustomValidity('Invalid formula.');
+          cell.input.reportValidity();
         }
       }
     }
 
     SpreadsheetApp.register();
-    SpreadsheetCell.register();
   </script>
 
   <style>
@@ -142,11 +136,8 @@
       padding: 0.125rem 0.5rem;
     }
 
-    spreadsheet-cell {
+    input {
       border: 0.5px solid black;
-    }
-
-    spreadsheet-cell > input {
       padding: 0.125rem 0.5rem;
       width: 100%;
       height: 100%;
