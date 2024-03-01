@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TinySelf: Tiny prototype-based object-oriented programming system</title>
+  </head>
+  <body>
+    <h1>TinySelf</h1>
+    <tiny-self> </tiny-self>
+  </body>
+
+  <script type="module">
+    import { findClosestIntention } from '../src/intentions';
+    import { ProgressiveElement } from '../src/progressive-element';
+
+    class TinySelf extends ProgressiveElement {
+      static tagName = 'tiny-self';
+
+      static delegatedEvents = ['click'];
+
+      handleEvent(event) {
+        const { intention } = findClosestIntention(event);
+
+        switch (intention) {
+          case '': {
+            return;
+          }
+        }
+      }
+    }
+
+    TinySelf.register();
+  </script>
+
+  <style></style>
+</html>

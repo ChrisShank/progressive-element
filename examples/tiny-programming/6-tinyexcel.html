@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TinyExcel: Tiny incremental spreadsheet system</title>
+  </head>
+  <body>
+    <h1>TinyExcel</h1>
+    <tiny-excel> </tiny-excel>
+  </body>
+
+  <script type="module">
+    import { findClosestIntention } from '../src/intentions';
+    import { ProgressiveElement } from '../src/progressive-element';
+
+    class TinyExcel extends ProgressiveElement {
+      static tagName = 'tiny-excel';
+
+      static delegatedEvents = ['click'];
+
+      handleEvent(event) {
+        const { intention } = findClosestIntention(event);
+
+        switch (intention) {
+          case '': {
+            return;
+          }
+        }
+      }
+    }
+
+    TinyExcel.register();
+  </script>
+
+  <style></style>
+</html>

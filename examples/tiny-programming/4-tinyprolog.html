@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TinyProlog: Tiny declarative logic programming language</title>
+  </head>
+  <body>
+    <h1>TinyProlog</h1>
+    <tiny-prolog> </tiny-prolog>
+  </body>
+
+  <script type="module">
+    import { findClosestIntention } from '../src/intentions';
+    import { ProgressiveElement } from '../src/progressive-element';
+
+    class TinyProlog extends ProgressiveElement {
+      static tagName = 'tiny-prolog';
+
+      static delegatedEvents = ['click'];
+
+      handleEvent(event) {
+        const { intention } = findClosestIntention(event);
+
+        switch (intention) {
+          case '': {
+            return;
+          }
+        }
+      }
+    }
+
+    TinyProlog.register();
+  </script>
+
+  <style></style>
+</html>

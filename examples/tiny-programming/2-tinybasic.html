@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tinyBASIC - Tiny imperative interactive programming system</title>
+  </head>
+  <body>
+    <h1>tinyBASIC</h1>
+    <tiny-basic> </tiny-basic>
+  </body>
+
+  <script type="module">
+    import { findClosestIntention } from '../src/intentions';
+    import { ProgressiveElement } from '../src/progressive-element';
+
+    class TinyBASIC extends ProgressiveElement {
+      static tagName = 'tiny-basic';
+
+      static delegatedEvents = ['click'];
+
+      handleEvent(event) {
+        const { intention } = findClosestIntention(event);
+
+        switch (intention) {
+          case '': {
+            return;
+          }
+        }
+      }
+    }
+
+    TinyBASIC.register();
+  </script>
+
+  <style></style>
+</html>
