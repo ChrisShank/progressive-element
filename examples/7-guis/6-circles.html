@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Circles</title>
+  </head>
+  <body>
+    <circle-canvas>
+      <div slot="toolbar">
+        <button on:click="UNDO">Undo</button>
+        <button on:click="REDO">Redo</button>
+      </div>
+
+      <div slot="canvas" on:click="CREATE_CIRCLE"></div>
+
+      <dialog on:close="CLOSE_DIALOG">
+        <p>Adjust diameter of circle at (<span id="coordinates"></span>).</p>
+        <input type="range" min="10" max="200" value="50" on:input="UPDATE_DIAMETER" />
+        <form method="dialog">
+          <button on:click="CLOSE_DIALOG">OK</button>
+        </form>
+      </dialog>
+    </circle-canvas>
+  </body>
+
+  <script type="module">
+    import { findClosestIntention } from '../src/intentions';
+    import { ProgressiveElement } from '../src/progressive-element';
+
+    class CircleCanvas extends ProgressiveElement {
+      static tagName = 'circle-canvas';
+      static delegatedEvents = ['click', 'input'];
+
+      dialog = this.querySelector('dialog');
+      coordinates = this.querySelector('#coordinates');
+      canvas = this.querySelector('[slot="canvas"]');
+      diameterInput = this.querySelector('dialog input[type="range"]');
+      activeCircle = null;
+
+      undoStack = [];
+      redoStack = [];
+
+      handleEvent(event) {
+        const { intention, target } = findClosestIntention(event);
+        this.handleIntention(intention, target);
+      }
+
+      handleIntention(intention, target) {
+        console.log(intention, target);
+        switch (intention) {
+          case 'CREATE_CIRCLE': {
+            const x = event.offsetX;
+            const y = event.offsetY;
+            this.activeCircle = document.createElement('circle-node');
+            this.activeCircle.setAttribute('diameter', 50);
+            this.activeCircle.style = `height: 50px; left: ${x}px; top: ${y}px; transform: translate(-50%, -50%);`;
+            this.activeCircle.setAttribute('coordinates', `${x}, ${y}`);
+            this.activeCircle.setAttribute('on:click', 'UPDATE_CIRCLE');
+
+            this.canvas.append(this.activeCircle);
+
+            this.openDialog();
+
+            this.undoStack.push({ intention, circle: this.activeCircle, diameter: '50' });
+            this.redoStack = [];
+            return;
+          }
+          case 'UPDATE_CIRCLE': {
+            this.activeCircle = target;
+            this.openDialog();
+            return;
+          }
+          case 'UPDATE_DIAMETER': {
+            if (!this.activeCircle) return;
+            const diameter = target.value;
+            this.activeCircle.setAttribute('diameter', diameter);
+            this.activeCircle.style.height = `${diameter}px`;
+
+            return;
+          }
+          case 'CLOSE_DIALOG': {
+            this.undoStack.push({
+              intention: 'UPDATE_DIAMETER',
+              circle: this.activeCircle,
+              diameter: this.activeCircle.getAttribute('diameter'),
+            });
+            this.redoStack = [];
+
+            this.activeCircle.removeAttribute('active');
+            this.activeCircle = null;
+            return;
+          }
+          case 'UNDO': {
+            if (this.undoStack.length === 0) return;
+            const undo = this.undoStack.pop();
+            this.redoStack.push(undo);
+
+            switch (undo.intention) {
+              case 'CREATE_CIRCLE': {
+                break;
+              }
+              case 'UPDATE_DIAMETER': {
+                break;
+              }
+            }
+
+            return;
+          }
+          case 'REDO': {
+            if (this.redoStack.length === 0) return;
+            const redo = this.redoStack.pop();
+            this.undoStack.push(redo);
+            return;
+          }
+        }
+      }
+
+      openDialog() {
+        if (!this.activeCircle) return;
+        this.activeCircle.setAttribute('active', '');
+        this.coordinates.textContent = this.activeCircle.getAttribute('coordinates');
+        this.diameterInput.value = this.activeCircle.getAttribute('diameter');
+        this.dialog.showModal();
+      }
+    }
+
+    CircleCanvas.register();
+  </script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    circle-canvas {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    circle-canvas [slot='toolbar'] {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    circle-canvas [slot='canvas'] {
+      height: 30rem;
+      width: 30rem;
+      border: 2px solid black;
+      position: relative;
+    }
+
+    circle-node {
+      position: absolute;
+      border: 1px solid black;
+      border-radius: 50%;
+      aspect-ratio: 1;
+    }
+
+    circle-node[active] {
+      background-color: silver;
+    }
+  </style>
+</html>
