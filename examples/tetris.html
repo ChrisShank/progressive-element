@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Counter</title>
+  </head>
+  <body>
+    <h1>Tetris</h1>
+    <tetris-game
+      on="keyup.ArrowDown:SOFT_DROP"
+      on="keyup.ArrowRight:MOVE_RIGHT"
+      on="keyup.ArrowLeft:MOVE_LEFT"
+      on="keyup.Space:HARD_DROP"
+      on="keyup.KeyZ:ROTATE"
+    >
+      <span slot="score">0</span>
+    </count-er>
+  </body>
+
+  <script type="module">
+    import { findClosestIntention, keyboardModifiers } from '../src/intentions';
+    import { ProgressiveElement } from '../src/progressive-element';
+
+    function keyModifier(event) {
+      return event instanceof KeyboardEvent ? '.' + event.key : '';
+    }
+
+    class TetrisGame extends ProgressiveElement {
+      static tagName = 'tetris-game';
+
+      static delegatedEvents = ['click'];
+
+      score = 0;
+      scoreSlot = this.querySelector('[slot="score"]');
+
+      handleEvent(event) {
+        const { intention } = findClosestIntention(event, keyModifier);
+
+        switch (intention) {
+          case '': {
+            
+          }
+        }
+      }
+    }
+
+    TetrisGame.register();
+  </script>
+
+  <style>
+    tetris-game {
+      [slot="score"] {
+      
+      }
+    }
+  </style>
+</html>

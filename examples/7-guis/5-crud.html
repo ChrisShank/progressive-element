@@ -27,8 +27,8 @@
   </body>
 
   <script type="module">
-    import { findClosestIntention } from '../src/intentions';
-    import { ProgressiveElement } from '../src/progressive-element';
+    import { findClosestIntention } from '../../src/intentions';
+    import { ProgressiveElement } from '../../src/progressive-element';
 
     class ContactList extends ProgressiveElement {
       static tagName = 'contact-list';
@@ -53,7 +53,16 @@
             if (this.filter) {
               this.querySelectorAll(
                 `fieldset label:has(input:not([value*='${this.filter}' i]))`
-              ).forEach((label) => label.setAttribute('hidden', ''));
+              ).forEach((label) => {
+                label.setAttribute('hidden', '');
+                const input = label.querySelector('input');
+                if (input === this.selectedContact.input) {
+                  this.selectedContact = null;
+                  input.checked = false;
+                  this.nameInput.value = '';
+                  this.surnameInput.value = '';
+                }
+              });
             }
 
             return;
