@@ -28,12 +28,16 @@
         return Number(this.countSpan.textContent);
       }
 
+      set count(count) {
+        this.countSpan.textContent = count;
+      }
+
       handleEvent(event) {
         const { intention } = findClosestIntention(event);
 
         switch (intention) {
           case 'INCREMENT': {
-            this.countSpan.textContent = this.count + 1;
+            this.count += 1;
             return;
           }
         }
