@@ -22,15 +22,18 @@
 
       static delegatedEvents = ['click'];
 
-      count = 0;
       countSpan = this.querySelector('[slot="count"]');
+
+      get count() {
+        return Number(this.countSpan.textContent);
+      }
 
       handleEvent(event) {
         const { intention } = findClosestIntention(event);
 
         switch (intention) {
           case 'INCREMENT': {
-            this.countSpan.textContent = ++this.count;
+            this.countSpan.textContent = this.count + 1;
             return;
           }
         }

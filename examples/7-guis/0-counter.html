@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Counter</title>
+  </head>
+  <body>
+    <h1>Counter</h1>
+    <span id="count">0</span>
+    <button on:click="INCREMENT" interval="4">+</button>
+  </body>
+
+  <script type="module">
+    import { findClosestIntention } from '../../src/intentions';
+
+    const countSpan = document.getElementById('count');
+
+    function handleEvent(event) {
+      const { intention, target } = findClosestIntention(event);
+      console.log(intention);
+      switch (intention) {
+        case 'INCREMENT': {
+          countSpan.textContent = count++;
+          return;
+        }
+      }
+    }
+
+    document.addEventListener('click', handleEvent);
+  </script>
+
+  <style>
+    #count {
+      display: inline-block;
+      min-width: 3rem;
+      border: 1px black solid;
+      padding: 0 0.25rem;
+    }
+  </style>
+</html>
