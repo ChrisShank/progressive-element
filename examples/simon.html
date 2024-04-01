@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simon</title>
+  </head>
+  <body>
+    <game-of-simon mode="off">
+      <div>
+        <section slot="console">
+          <h1>Simon®</h1>
+  
+          <button type="start">
+            <span slot="text">Start</span>
+          </button>
+  
+          <div slot="display">- -</div>
+  
+          <button type="strict">
+            <div slot="light"></div>
+            <span slot="text">Strict</span>
+          </button>
+  
+          <label slot="on-switch">
+            <input type="checkbox">
+            <span slot="slider"></span>
+          </label>
+        </section>
+
+        <button color="red"></button>
+        <button color="blue"></button>
+        <button color="yellow"></button>
+        <button color="green"></button>
+      </div>
+
+      <audio id="red-button" preload="auto">
+        <source src="https://s3.amazonaws.com/freecodecamp/simonSound1.mp3"></source>
+      </audio>
+
+      <audio id="blue-button" preload="auto">
+        <source src="https://s3.amazonaws.com/freecodecamp/simonSound2.mp3"></source>
+      </audio>
+
+      <audio id="yellow-button" preload="auto">
+        <source src="https://s3.amazonaws.com/freecodecamp/simonSound3.mp3"></source>
+      </audio>
+
+      <audio id="green-button" preload="auto">
+        <source src="https://s3.amazonaws.com/freecodecamp/simonSound4.mp3"></source>
+      </audio>
+    </game-of-simon>
+  </body>
+
+  <script type="module">
+    import { findClosestIntention } from '../src/intentions';
+    import { ProgressiveElement } from '../src/progressive-element';
+
+    class Simon extends ProgressiveElement {
+      static tagName = 'game-of-simon';
+
+      static delegatedEvents = ['click'];
+
+      handleEvent(event) {
+        const { intention } = findClosestIntention(event);
+
+        switch (intention) {
+          case '': {
+            return;
+          }
+        }
+      }
+    }
+
+    Simon.register();
+  </script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css?family=Alfa+Slab+One|VT323|Oswald');
+
+    html {
+      height: 100%;
+    }
+
+    body {
+      background: #DCDCDC;
+      margin: 0;
+      min-height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    button {
+      font-family: inherit;
+      border: 0;
+      margin: 0;
+      padding: 0;
+      background: unset;
+    }
+
+    game-of-simon {
+      display: block;
+      font-variant-numeric: tabular-nums;
+      font-family: 'Alfa Slab One', sans-serif;
+      background: linear-gradient(lightgrey 0%, gray 30%, #404040 75%);
+      border: .6px solid #303030;
+      border-radius: 50%;
+      box-shadow: 0 5px 5px 5px rgba(0,0,0,0.4);
+      height: 390px;
+      width: 390px;
+
+      > div {
+        border-radius: 50%;
+        box-shadow: 0 5px 5px 5px rgba(0,0,0,0.4);
+        height: 370px;
+        width: 370px;
+        border: #181818 solid 1px;
+        overflow: hidden;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      [slot="console"] {
+        display: block;
+        background: #E8E8E8;
+        border: #404040 solid 8px;
+        border-radius: 50%;
+        box-shadow: 0px 0px 5px 6px rgba(0,0,0,0.85);
+        height: 200px;
+        width: 200px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 2;
+
+        > h1 {
+          font-size: 30px;
+          text-align: center;
+        }
+
+        > [slot="display"] {
+          display: block;
+          background: #181818;
+          border: #404040 solid 2px;
+          border-radius: 5px;
+          width: 60px;
+          height: 40px;
+          color: #F8F8F8;
+          font-size: 25px;
+          line-height: 40px;
+          text-align: center;
+          transition: color 0.5s ease-in;
+
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+        }
+        
+        > button {
+          border: #404040 solid 4px;
+          border-radius: 50%;
+          font-size: 14px;
+          height: 33px;
+          width: 33px;
+
+          position: absolute;
+          top: 43%;
+
+          /* Center text */
+          display: flex;
+          justify-content: center;
+
+          &[type="start"] {
+            background: #4885ed;
+            left: 10%;
+          }
+
+          &[type="strict"] {
+            background: #f4c20d;
+            right: 10%;
+
+            [slot="light"] {
+              display: block;
+              background: #181818;
+              border-radius: 50%;
+              height: 7px;
+              min-width: 7px;
+              position: absolute;
+              top: -70%;
+            }
+          }
+
+          [slot="text"] {
+            position: relative;
+            top: 120%;
+          }
+        }
+
+        > [slot="on-switch"] {
+          display: block;
+          border-radius: 5px;
+          border: 4px solid #404040;
+          cursor: pointer;
+          padding: 3px;
+          position: absolute;
+          bottom: 0;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          /* transition: all 0.6s; */
+          width: 40px;
+
+          input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+            position: absolute;
+          }
+
+          [slot="slider"] {
+            display: block;
+            background: #db3236;
+            border-radius: 2px;
+            height: 16px;
+            width: 16px;
+            position: relative;
+            left: 0;
+            transition: all 0.6s;
+          }
+
+          input:checked + [slot="slider"] {
+            background: #3cba54;
+            left: 60%; /* magic number */
+          }
+        }
+      }
+
+      button[color] {
+        box-shadow: inset 3px -3px 0px 0px rgba(0,0,0,1);
+        height: 90px;
+        -webkit-tap-highlight-color: rgba(0,0,0,0);
+        width: 270px;
+
+        &, &::after {
+          cursor: pointer;
+          position: absolute;
+          transition: all .1s ease-in-out;
+        }
+
+        &::after {
+          box-shadow: inset 3px 0px 0px 0px rgba(0,0,0,1);
+          content: "";
+          display: block;
+          height: 106px;
+          top: 69px;
+          width: 102px;
+        }
+
+        &:active, &:active::after {
+          box-shadow: inset 4.5px -4.5px 0px 0px rgba(0,0,0,1);
+        }
+
+        &[color="red"] {
+          top: 37px;
+          left: 153px;
+          transform: rotate(33deg);
+
+          &, &::after {
+            background: #CC2F33;
+          }
+
+          &:active, &:active::after {
+            background: #FF0000
+          }
+        }
+
+        &[color="blue"] {
+          top: 251px;
+          left: 156px;
+          transform: rotate(123deg);
+          z-index: 1;
+
+          &, &::after {
+            background: #4885ed;
+          }
+
+          &:active, &:active::after {
+            background: #4BCDFF
+          }
+        }
+
+        &[color="yellow"] {
+          top: 250px;
+          left: -56px;
+          transform: rotate(213deg);
+
+          &, &::after {
+            background: #f4c20d;
+          }
+
+          &:active, &:active::after {
+            background: #FFF200
+          }
+        }
+
+        &[color="green"] {
+          top: 37px;
+          right: 158px;
+          transform: rotate(303deg);
+
+          &, &::after {
+            background: #3cba54;
+          }
+
+          &:active, &:active::after {
+            background: #58FF76
+          }
+        }
+      }
+
+      &[strict]:not([mode="off"]) button[type="strict"] [slot="light"] {
+        background: rgb(219, 50, 54);
+      }
+
+      [slot="console"]:has(input:not(:checked)) { /* &[mode="idle"] */
+        [slot="display"] {
+          color: rgba(0,0,0,0);
+        }
+      }
+
+      &[mode="idle"] {
+        
+      }
+
+      &[mode="playing"] {
+        
+      }
+
+      &[mode="won"] {
+        
+      }
+    }
+  </style>
+</html>

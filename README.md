@@ -3,7 +3,7 @@
 ## Principles
 
 - Subtractive mindset + remove layers of abstraction
-- Behavior is more important to understand than UI hierarchy.
+- Behavior is more important to understanding than UI hierarchy.
 - Leverage new (and old) features of the browser.
 - Optional patterns than can be layered together.
 - Stop combining the server/client into one.
