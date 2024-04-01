@@ -1,4 +1,7 @@
-# Towards a new paradigm for building web interfaces
+# Towards a behavioral paradigm for building web interfaces
+
+<img width="604" alt="image" src="https://github.com/ChrisShank/progressive-element/assets/19981604/950c27cf-be24-41d9-8571-27f61c96c284">
+
 
 ## Principles
 
