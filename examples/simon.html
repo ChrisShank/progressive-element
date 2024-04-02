@@ -11,27 +11,27 @@
         <section slot="console">
           <h1>Simon®</h1>
   
-          <button type="start">
+          <button type="start" on:click="START_GAME">
             <span slot="text">Start</span>
           </button>
   
           <div slot="display">- -</div>
   
-          <button type="strict">
+          <button type="strict" on:click="TOGGLE_STRICT_MODE">
             <div slot="light"></div>
             <span slot="text">Strict</span>
           </button>
   
           <label slot="on-switch">
-            <input type="checkbox">
+            <input type="checkbox" on:input="TOGGLE_POWER">
             <span slot="slider"></span>
           </label>
         </section>
 
-        <button color="red"></button>
-        <button color="blue"></button>
-        <button color="yellow"></button>
-        <button color="green"></button>
+        <button color="red" on:click="COLOR_PRESSED"></button>
+        <button color="blue" on:click="COLOR_PRESSED"></button>
+        <button color="yellow" on:click="COLOR_PRESSED"></button>
+        <button color="green" on:click="COLOR_PRESSED"></button>
       </div>
 
       <audio id="red-button" preload="auto">
@@ -59,13 +59,14 @@
     class Simon extends ProgressiveElement {
       static tagName = 'game-of-simon';
 
-      static delegatedEvents = ['click'];
+      static delegatedEvents = ['click', 'input'];
 
       handleEvent(event) {
         const { intention } = findClosestIntention(event);
-
+        console.log(intention);
+        
         switch (intention) {
-          case '': {
+          case '' : {
             return;
           }
         }
@@ -167,6 +168,7 @@
           font-size: 14px;
           height: 33px;
           width: 33px;
+          cursor: pointer;
 
           position: absolute;
           top: 43%;
@@ -198,6 +200,7 @@
           [slot="text"] {
             position: relative;
             top: 120%;
+            pointer-events: none;
           }
         }
 
@@ -326,22 +329,8 @@
         background: rgb(219, 50, 54);
       }
 
-      [slot="console"]:has(input:not(:checked)) { /* &[mode="idle"] */
-        [slot="display"] {
-          color: rgba(0,0,0,0);
-        }
-      }
-
-      &[mode="idle"] {
-        
-      }
-
-      &[mode="playing"] {
-        
-      }
-
-      &[mode="won"] {
-        
+      &[mode="off"] [slot="display"] {
+        color: rgba(0,0,0,0);
       }
     }
   </style>

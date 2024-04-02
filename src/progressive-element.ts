@@ -11,6 +11,7 @@ type AnyEventType = keyof HTMLElementEventMap | (string & {});
  */
 export class ProgressiveElement extends HTMLElement implements EventListenerObject {
   static tagName = '';
+
   /**
    * Register the custom element with the window. By default then name of the custom element is the kebab-case of the class name.
    */
