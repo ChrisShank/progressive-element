@@ -2,7 +2,6 @@
 
 <img width="604" alt="image" src="https://github.com/ChrisShank/progressive-element/assets/19981604/950c27cf-be24-41d9-8571-27f61c96c284">
 
-
 ## Principles
 
 - Subtractive mindset + remove layers of abstraction
@@ -20,3 +19,5 @@
 - CSS "reactivity" that conditionally styles the page based on DOM attributes or other state-based selectors (e.g. `:has`). Originally [written](https://calendar.perfplanet.com/2022/an-html-first-mental-model/) about by Noam.
 
 Provided in the repo are some optional/unopionated helpers that implement these patterns.
+
+For a more detailed explanation check out [this](https://github.com/ChrisShank/progressive-element/blob/main/docs/philosophy.md)
