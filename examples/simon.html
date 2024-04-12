@@ -10,20 +10,20 @@
       <div>
         <section slot="console">
           <h1>Simon®</h1>
-  
+
           <button type="start" on:click="START_GAME">
             <span slot="text">Start</span>
           </button>
-  
+
           <div slot="display">- -</div>
-  
+
           <button type="strict" on:click="TOGGLE_STRICT_MODE">
             <div slot="light"></div>
             <span slot="text">Strict</span>
           </button>
-  
+
           <label slot="on-switch">
-            <input type="checkbox" on:input="TOGGLE_POWER">
+            <input type="checkbox" on:input="TOGGLE_POWER" />
             <span slot="slider"></span>
           </label>
         </section>
@@ -34,20 +34,20 @@
         <button color="green" on:click="COLOR_PRESSED"></button>
       </div>
 
-      <audio id="red-button" preload="auto">
-        <source src="https://s3.amazonaws.com/freecodecamp/simonSound1.mp3"></source>
+      <audio color="red" preload="auto">
+        <source src="https://s3.amazonaws.com/freecodecamp/simonSound1.mp3" />
       </audio>
 
-      <audio id="blue-button" preload="auto">
-        <source src="https://s3.amazonaws.com/freecodecamp/simonSound2.mp3"></source>
+      <audio color="blue" preload="auto">
+        <source src="https://s3.amazonaws.com/freecodecamp/simonSound2.mp3" />
       </audio>
 
-      <audio id="yellow-button" preload="auto">
-        <source src="https://s3.amazonaws.com/freecodecamp/simonSound3.mp3"></source>
+      <audio color="yellow" preload="auto">
+        <source src="https://s3.amazonaws.com/freecodecamp/simonSound3.mp3" />
       </audio>
 
-      <audio id="green-button" preload="auto">
-        <source src="https://s3.amazonaws.com/freecodecamp/simonSound4.mp3"></source>
+      <audio color="green" preload="auto">
+        <source src="https://s3.amazonaws.com/freecodecamp/simonSound4.mp3" />
       </audio>
     </game-of-simon>
   </body>
@@ -56,20 +56,163 @@
     import { findClosestIntention } from '../src/intentions';
     import { ProgressiveElement } from '../src/progressive-element';
 
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
     class Simon extends ProgressiveElement {
       static tagName = 'game-of-simon';
 
       static delegatedEvents = ['click', 'input'];
 
-      handleEvent(event) {
-        const { intention } = findClosestIntention(event);
-        console.log(intention);
-        
+      display = this.querySelector('[slot="display"]');
+
+      audios = {
+        red: this.querySelector('audio[color="red"]'),
+        blue: this.querySelector('audio[color="blue"]'),
+        yellow: this.querySelector('audio[color="yellow"]'),
+        green: this.querySelector('audio[color="green"]'),
+      };
+
+      buttons = {
+        red: this.querySelector('button[color="red"]'),
+        blue: this.querySelector('button[color="blue"]'),
+        yellow: this.querySelector('button[color="yellow"]'),
+        green: this.querySelector('button[color="green"]'),
+      };
+
+      colors = ['red', 'blue', 'yellow', 'green'];
+
+      sequenceIndex = -1;
+      sequence = [];
+      isPlayingSequence = false;
+
+      get mode() {
+        return this.getAttribute('mode') || 'off';
+      }
+
+      set mode(mode) {
+        this.setAttribute('mode', mode);
+      }
+
+      get strict() {
+        return this.hasAttribute('strict');
+      }
+
+      set strict(strict) {
+        strict ? this.setAttribute('strict', '') : this.removeAttribute('strict');
+      }
+
+      async handleEvent(event) {
+        const { intention, target } = findClosestIntention(event);
+
         switch (intention) {
-          case '' : {
+          case 'TOGGLE_POWER': {
+            this.mode = this.mode !== 'off' ? 'off' : 'idle';
+
+            if (this.mode === 'idle') {
+              await this.playSequence(this.colors, 150, false);
+            } else if (this.mode === 'off') {
+              this.resetGame();
+            }
+            return;
+          }
+          case 'TOGGLE_STRICT_MODE': {
+            if (this.mode === 'off') return;
+            this.strict = !this.strict;
+            return;
+          }
+          case 'START_GAME': {
+            if (this.mode !== 'idle') return;
+
+            this.resetGame();
+            this.mode = 'playing';
+            this.addRandomColorToSequence();
+            await this.playSequence(this.sequence);
+            return;
+          }
+          case 'COLOR_PRESSED': {
+            if (this.isPlayingSequence || this.mode !== 'playing') return;
+
+            const guessColor = target.getAttribute('color');
+
+            if (!guessColor) return;
+
+            await this.playSequence([guessColor], 0);
+
+            const isGuessCorrect = guessColor === this.sequence[this.sequenceIndex];
+
+            if (isGuessCorrect) {
+              if (this.sequenceIndex + 1 >= this.sequence.length) {
+                if (this.sequence.length >= 20) {
+                  this.display.innerText = 'YOU';
+                  await this.playSequence(this.colors, 150, false);
+                  this.display.innerText = 'WIN';
+                  await this.playSequence(this.colors.reverse(), 150, false);
+                  this.resetGame();
+                } else {
+                  await this.playSequence(this.colors, 150, false);
+                  await sleep(500);
+                  this.addRandomColorToSequence(this.sequence);
+                  await this.playSequence(this.sequence);
+                }
+              } else {
+                this.sequenceIndex += 1;
+              }
+            } else if (this.strict) {
+              this.resetGame();
+            } else {
+              await this.playSequence(this.colors.reverse(), 150, false);
+              await this.playSequence(this.sequence);
+            }
             return;
           }
         }
+      }
+
+      addRandomColorToSequence() {
+        this.sequence.push(this.colors[Math.floor(Math.random() * 4)]);
+        this.sequenceIndex = 0;
+        this.display.innerText = this.sequence.length.toString().padStart(2, '0');
+      }
+
+      async playSequence(sequence, delay = 100, sound = true) {
+        this.isPlayingSequence = true;
+
+        for (const color of sequence) {
+          const audio = this.audios[color];
+          const button = this.buttons[color];
+          button.setAttribute('active', '');
+          if (sound) {
+            await this.playSound(audio);
+          } else {
+            await sleep(delay);
+          }
+          button.removeAttribute('active');
+          await sleep(delay);
+        }
+
+        this.isPlayingSequence = false;
+      }
+
+      resetGame() {
+        this.sequence = [];
+        this.sequenceIndex = -1;
+        this.display.innerText = '- -';
+        this.mode = 'idle';
+      }
+
+      playSound(audio) {
+        const { promise, resolve } = Promise.withResolvers();
+
+        const handler = () => {
+          audio.removeEventListener('ended', handler);
+          resolve();
+        };
+
+        audio.addEventListener('ended', handler);
+
+        audio.play();
+
+        return promise;
       }
     }
 
@@ -84,7 +227,7 @@
     }
 
     body {
-      background: #DCDCDC;
+      background: #dcdcdc;
       margin: 0;
       min-height: 100%;
       display: flex;
@@ -105,15 +248,15 @@
       font-variant-numeric: tabular-nums;
       font-family: 'Alfa Slab One', sans-serif;
       background: linear-gradient(lightgrey 0%, gray 30%, #404040 75%);
-      border: .6px solid #303030;
+      border: 0.6px solid #303030;
       border-radius: 50%;
-      box-shadow: 0 5px 5px 5px rgba(0,0,0,0.4);
+      box-shadow: 0 5px 5px 5px rgba(0, 0, 0, 0.4);
       height: 390px;
       width: 390px;
 
       > div {
         border-radius: 50%;
-        box-shadow: 0 5px 5px 5px rgba(0,0,0,0.4);
+        box-shadow: 0 5px 5px 5px rgba(0, 0, 0, 0.4);
         height: 370px;
         width: 370px;
         border: #181818 solid 1px;
@@ -124,12 +267,12 @@
         transform: translate(-50%, -50%);
       }
 
-      [slot="console"] {
+      [slot='console'] {
         display: block;
-        background: #E8E8E8;
+        background: #e8e8e8;
         border: #404040 solid 8px;
         border-radius: 50%;
-        box-shadow: 0px 0px 5px 6px rgba(0,0,0,0.85);
+        box-shadow: 0px 0px 5px 6px rgba(0, 0, 0, 0.85);
         height: 200px;
         width: 200px;
         position: absolute;
@@ -143,15 +286,15 @@
           text-align: center;
         }
 
-        > [slot="display"] {
+        > [slot='display'] {
           display: block;
           background: #181818;
           border: #404040 solid 2px;
           border-radius: 5px;
           width: 60px;
           height: 40px;
-          color: #F8F8F8;
-          font-size: 25px;
+          color: #f8f8f8;
+          font-size: 20px;
           line-height: 40px;
           text-align: center;
           transition: color 0.5s ease-in;
@@ -161,7 +304,7 @@
           left: 50%;
           transform: translate(-50%, -50%);
         }
-        
+
         > button {
           border: #404040 solid 4px;
           border-radius: 50%;
@@ -177,16 +320,16 @@
           display: flex;
           justify-content: center;
 
-          &[type="start"] {
+          &[type='start'] {
             background: #4885ed;
             left: 10%;
           }
 
-          &[type="strict"] {
+          &[type='strict'] {
             background: #f4c20d;
             right: 10%;
 
-            [slot="light"] {
+            [slot='light'] {
               display: block;
               background: #181818;
               border-radius: 50%;
@@ -197,14 +340,14 @@
             }
           }
 
-          [slot="text"] {
+          [slot='text'] {
             position: relative;
             top: 120%;
             pointer-events: none;
           }
         }
 
-        > [slot="on-switch"] {
+        > [slot='on-switch'] {
           display: block;
           border-radius: 5px;
           border: 4px solid #404040;
@@ -224,7 +367,7 @@
             position: absolute;
           }
 
-          [slot="slider"] {
+          [slot='slider'] {
             display: block;
             background: #db3236;
             border-radius: 2px;
@@ -235,7 +378,7 @@
             transition: all 0.6s;
           }
 
-          input:checked + [slot="slider"] {
+          input:checked + [slot='slider'] {
             background: #3cba54;
             left: 60%; /* magic number */
           }
@@ -243,94 +386,112 @@
       }
 
       button[color] {
-        box-shadow: inset 3px -3px 0px 0px rgba(0,0,0,1);
+        box-shadow: inset 3px -3px 0px 0px rgba(0, 0, 0, 1);
         height: 90px;
-        -webkit-tap-highlight-color: rgba(0,0,0,0);
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
         width: 270px;
 
-        &, &::after {
+        &,
+        &::after {
           cursor: pointer;
           position: absolute;
-          transition: all .1s ease-in-out;
+          transition: all 0.1s ease-in-out;
         }
 
         &::after {
-          box-shadow: inset 3px 0px 0px 0px rgba(0,0,0,1);
-          content: "";
+          box-shadow: inset 3px 0px 0px 0px rgba(0, 0, 0, 1);
+          content: '';
           display: block;
           height: 106px;
           top: 69px;
           width: 102px;
         }
 
-        &:active, &:active::after {
-          box-shadow: inset 4.5px -4.5px 0px 0px rgba(0,0,0,1);
+        &:active,
+        &:active::after {
+          box-shadow: inset 4.5px -4.5px 0px 0px rgba(0, 0, 0, 1);
         }
 
-        &[color="red"] {
+        &[color='red'] {
           top: 37px;
           left: 153px;
           transform: rotate(33deg);
 
-          &, &::after {
-            background: #CC2F33;
+          &,
+          &::after {
+            background: #cc2f33;
           }
 
-          &:active, &:active::after {
-            background: #FF0000
+          &:active,
+          &:active::after,
+          &[active],
+          &[active]::after {
+            background: #ff0000;
           }
         }
 
-        &[color="blue"] {
+        &[color='blue'] {
           top: 251px;
           left: 156px;
           transform: rotate(123deg);
           z-index: 1;
 
-          &, &::after {
+          &,
+          &::after {
             background: #4885ed;
           }
 
-          &:active, &:active::after {
-            background: #4BCDFF
+          &:active,
+          &:active::after,
+          &[active],
+          &[active]::after {
+            background: #4bcdff;
           }
         }
 
-        &[color="yellow"] {
+        &[color='yellow'] {
           top: 250px;
           left: -56px;
           transform: rotate(213deg);
 
-          &, &::after {
+          &,
+          &::after {
             background: #f4c20d;
           }
 
-          &:active, &:active::after {
-            background: #FFF200
+          &:active,
+          &:active::after,
+          &[active],
+          &[active]::after {
+            background: #fff200;
           }
         }
 
-        &[color="green"] {
+        &[color='green'] {
           top: 37px;
           right: 158px;
           transform: rotate(303deg);
 
-          &, &::after {
+          &,
+          &::after {
             background: #3cba54;
           }
 
-          &:active, &:active::after {
-            background: #58FF76
+          &:active,
+          &:active::after,
+          &[active],
+          &[active]::after {
+            background: #58ff76;
           }
         }
       }
 
-      &[strict]:not([mode="off"]) button[type="strict"] [slot="light"] {
+      &[strict]:not([mode='off']) button[type='strict'] [slot='light'] {
         background: rgb(219, 50, 54);
       }
 
-      &[mode="off"] [slot="display"] {
-        color: rgba(0,0,0,0);
+      &[mode='off'] [slot='display'] {
+        color: rgba(0, 0, 0, 0);
       }
     }
   </style>
