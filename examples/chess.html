@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chess</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        height: 100%;
+        font-family: 'Inter', sans-serif;
+        font-optical-sizing: auto;
+        font-style: normal;
+        font-variation-settings: 'slnt' 0;
+      }
+
+      body {
+        min-height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0;
+      }
+
+      chess-board {
+        --square-size: 75px;
+        --dark-color: #c1926e;
+        --light-color: #f0dcb9;
+
+        display: grid;
+        grid-template-columns: repeat(8, var(--square-size) [col-start]);
+        grid-template-rows: repeat(8, var(--square-size) [col-start]);
+
+        > chess-square {
+          display: block;
+          position: relative;
+          background-color: var(--light-color);
+          background-size: 85%;
+          background-position: center;
+          background-repeat: no-repeat;
+          color: var(--dark-color);
+          font-variant-numeric: tabular-nums;
+          font-size: 0.9rem;
+
+          &:nth-child(16n + 2),
+          &:nth-child(16n + 4),
+          &:nth-child(16n + 6),
+          &:nth-child(16n + 8),
+          &:nth-child(16n + 9),
+          &:nth-child(16n + 11),
+          &:nth-child(16n + 13),
+          &:nth-child(16n + 15) {
+            background-color: var(--dark-color);
+            color: var(--light-color);
+          }
+
+          /* Label rows */
+          &:nth-child(8n + 1)::before {
+            content: attr(row);
+            position: absolute;
+            padding: 0.15rem;
+            top: 0;
+            left: 0;
+          }
+
+          /* Label columns */
+          &:nth-last-of-type(-n + 8)::after {
+            content: attr(column);
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            padding: 0.15rem;
+          }
+
+          &[piece='black-pawn'] {
+            background-image: url('/black-pawn.png');
+          }
+
+          &[piece='black-knight'] {
+            background-image: url('/black-knight.png');
+          }
+
+          &[piece='black-bishop'] {
+            background-image: url('/black-bishop.png');
+          }
+
+          &[piece='black-rook'] {
+            background-image: url('/black-rook.png');
+          }
+
+          &[piece='black-queen'] {
+            background-image: url('/black-queen.png');
+          }
+
+          &[piece='black-king'] {
+            background-image: url('/black-king.png');
+          }
+
+          &[piece='white-pawn'] {
+            background-image: url('/white-pawn.png');
+          }
+
+          &[piece='white-knight'] {
+            background-image: url('/white-knight.png');
+          }
+
+          &[piece='white-bishop'] {
+            background-image: url('/white-bishop.png');
+          }
+
+          &[piece='white-rook'] {
+            background-image: url('/white-rook.png');
+          }
+
+          &[piece='white-queen'] {
+            background-image: url('/white-queen.png');
+          }
+
+          &[piece='white-king'] {
+            background-image: url('/white-king.png');
+          }
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <chess-board></chess-board>
+  </body>
+
+  <script type="module">
+    import { findClosestIntention } from '../src/intentions';
+    import { ProgressiveElement } from '../src/progressive-element';
+
+    function getColumnName(index) {
+      return 'abcdefghijklmnopqrstuvwxyz'[index % 26];
+    }
+
+    const defaultBoard = {
+      a1: 'white-rook',
+      b1: 'white-knight',
+      c1: 'white-bishop',
+      d1: 'white-queen',
+      e1: 'white-king',
+      f1: 'white-bishop',
+      g1: 'white-knight',
+      h1: 'white-rook',
+      a2: 'white-pawn',
+      b2: 'white-pawn',
+      c2: 'white-pawn',
+      d2: 'white-pawn',
+      e2: 'white-pawn',
+      f2: 'white-pawn',
+      g2: 'white-pawn',
+      h2: 'white-pawn',
+      a7: 'black-pawn',
+      b7: 'black-pawn',
+      c7: 'black-pawn',
+      d7: 'black-pawn',
+      e7: 'black-pawn',
+      f7: 'black-pawn',
+      g7: 'black-pawn',
+      h7: 'black-pawn',
+      a8: 'black-rook',
+      b8: 'black-knight',
+      c8: 'black-bishop',
+      d8: 'black-king',
+      e8: 'black-queen',
+      f8: 'black-bishop',
+      g8: 'black-knight',
+      h8: 'black-rook',
+    };
+
+    class ChessSquare extends ProgressiveElement {
+      static tagName = 'chess-square';
+
+      get column() {
+        return this.getAttribute('column') || '';
+      }
+
+      set column(column) {
+        this.setAttribute('column', column);
+      }
+
+      get row() {
+        return this.getAttribute('row') || '';
+      }
+
+      set row(row) {
+        this.setAttribute('row', row);
+      }
+
+      get piece() {
+        return this.getAttribute('piece') || '';
+      }
+
+      set piece(piece) {
+        this.setAttribute('piece', piece);
+      }
+    }
+
+    ChessSquare.register();
+
+    class ChessBoard extends ProgressiveElement {
+      static tagName = 'chess-board';
+
+      // static delegatedEvents = ['click'];
+
+      #mounted = false;
+      #pieces = new Map();
+
+      connectedCallback() {
+        if (!this.#mounted) {
+          for (let i = 8; i > 0; i -= 1) {
+            for (let j = 0; j < 8; j += 1) {
+              const square = document.createElement('chess-square');
+              square.row = i;
+              const column = getColumnName(j);
+              square.column = column;
+              this.#pieces.set(column + i, square);
+            }
+          }
+
+          this.append(...this.#pieces.values());
+          this.configureBoard();
+          this.#mounted = true;
+        }
+      }
+
+      handleEvent(event) {
+        const { intention } = findClosestIntention(event);
+
+        switch (intention) {
+          case '': {
+            return;
+          }
+        }
+      }
+
+      configureBoard(board = defaultBoard) {
+        for (const [square, piece] of Object.entries(board)) {
+          const squareElement = this.#pieces.get(square);
+          if (squareElement != null) {
+            squareElement.piece = piece;
+          }
+        }
+      }
+    }
+
+    ChessBoard.register();
+  </script>
+
+  <style>
+    count-er {
+      [slot='count'] {
+        display: inline-block;
+        min-width: 3rem;
+        border: 1px black solid;
+        padding: 0 0.25rem;
+      }
+    }
+  </style>
+</html>
