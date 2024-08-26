@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Benchmarks for vanillajs-ce</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.6/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      crossorigin="anonymous"
+    />
+    <style>
+      body {
+        padding: 10px 0 0 0;
+        margin: 0;
+        overflow-y: scroll;
+      }
+      #duration {
+        padding-top: 0px;
+      }
+      .jumbotron {
+        padding-top: 10px;
+        padding-bottom: 10px;
+      }
+      .test-data a {
+        display: block;
+      }
+      .preloadicon {
+        position: absolute;
+        top: -20px;
+        left: -20px;
+      }
+      .col-sm-6.smallpad {
+        padding: 5px;
+      }
+      .jumbotron .row h1 {
+        font-size: 40px;
+      }
+    </style>
+  </head>
+  <body>
+    <word-list>
+      <div class="container">
+        <div class="jumbotron">
+          <div class="row">
+            <div class="col-md-6">
+              <h1>Vanilla-CE-"keyed"</h1>
+            </div>
+            <div class="col-md-6">
+              <div class="row">
+                <div class="col-sm-6 smallpad">
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-block"
+                    on:click="CREATE_1000_ROWS"
+                  >
+                    Create 1,000 rows
+                  </button>
+                </div>
+                <div class="col-sm-6 smallpad">
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-block"
+                    on:click="CREATE_10000_ROWS"
+                  >
+                    Create 10,000 rows
+                  </button>
+                </div>
+                <div class="col-sm-6 smallpad">
+                  <button type="button" class="btn btn-primary btn-block" on:click="ADD_1000_ROWS">
+                    Append 1,000 rows
+                  </button>
+                </div>
+                <div class="col-sm-6 smallpad">
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-block"
+                    on:click="UPDATE_10th_ROW"
+                  >
+                    Update every 10th row
+                  </button>
+                </div>
+                <div class="col-sm-6 smallpad">
+                  <button type="button" class="btn btn-primary btn-block" on:click="CLEAR_ROWS">
+                    Clear
+                  </button>
+                </div>
+                <div class="col-sm-6 smallpad">
+                  <button type="button" class="btn btn-primary btn-block" on:click="SWAP_ROWS">
+                    Swap Rows
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <table class="table table-hover table-striped test-data">
+          <tbody></tbody>
+        </table>
+        <span class="preloadicon glyphicon glyphicon-remove" aria-hidden="true"></span>
+      </div>
+
+      <template>
+        <tr>
+          <td class="col-md-1"></td>
+          <td class="col-md-4"><a on:click="SELECT_ROW"></a></td>
+          <td class="col-md-1">
+            <a on:click="SELECT_ROW"
+              ><span
+                class="glyphicon glyphicon-remove"
+                aria-hidden="true"
+                on:click="REMOVE_ROW"
+              ></span
+            ></a>
+          </td>
+          <td class="col-md-6"></td>
+        </tr>
+      </template>
+    </word-list>
+
+    <script type="module">
+      const adjectives = [
+        'pretty',
+        'large',
+        'big',
+        'small',
+        'tall',
+        'short',
+        'long',
+        'handsome',
+        'plain',
+        'quaint',
+        'clean',
+        'elegant',
+        'easy',
+        'angry',
+        'crazy',
+        'helpful',
+        'mushy',
+        'odd',
+        'unsightly',
+        'adorable',
+        'important',
+        'inexpensive',
+        'cheap',
+        'expensive',
+        'fancy',
+      ];
+      const colours = [
+        'red',
+        'yellow',
+        'blue',
+        'green',
+        'pink',
+        'brown',
+        'purple',
+        'brown',
+        'white',
+        'black',
+        'orange',
+      ];
+      const nouns = [
+        'table',
+        'chair',
+        'house',
+        'bbq',
+        'desk',
+        'car',
+        'pony',
+        'cookie',
+        'sandwich',
+        'burger',
+        'pizza',
+        'mouse',
+        'keyboard',
+      ];
+      const pick = (dict) => dict[Math.round(Math.random() * 1000) % dict.length];
+      const label = () => `${pick(adjectives)} ${pick(colours)} ${pick(nouns)}`;
+
+      class WordList extends HTMLElement {
+        tbody = this.querySelector('tbody');
+        rowTemplate = this.querySelector('template');
+        rowId = 1;
+        selectedRow = null;
+
+        constructor() {
+          super();
+          this.addEventListener('click', this);
+        }
+
+        handleEvent(event) {
+          const { intention, target } = findClosestIntention(event);
+
+          if (intention === undefined) return;
+
+          event.stopPropagation();
+
+          switch (intention) {
+            case 'CREATE_1000_ROWS': {
+              this.clearRows();
+              this.addRows(1_000);
+              return;
+            }
+            case 'CREATE_10000_ROWS': {
+              this.clearRows();
+              this.addRows(10_000);
+              return;
+            }
+            case 'ADD_1000_ROWS': {
+              this.addRows();
+              return;
+            }
+            case 'UPDATE_10th_ROW': {
+              this.tbody
+                .querySelectorAll('tr:nth-child(10n) > td:nth-child(2) > a')
+                .forEach((label) => (label.firstChild.nodeValue += ' !!!'));
+              return;
+            }
+            case 'SELECT_ROW': {
+              event.preventDefault();
+              const row = target.closest('tr');
+              if (row === this.selectedRow) {
+                row.classList.remove('danger');
+              } else {
+                this.selectedRow?.classList.remove('danger');
+                row.classList.add('danger');
+                this.selectedRow = row;
+              }
+              return;
+            }
+            case 'REMOVE_ROW': {
+              const tr = target.closest('tr');
+              if (tr === this.selectedRow) {
+                this.selectedRow = null;
+              }
+              tr.remove();
+              return;
+            }
+            case 'CLEAR_ROWS': {
+              this.clearRows();
+              return;
+            }
+            case 'SWAP_ROWS': {
+              const firstChild = this.tbody.firstElementChild;
+              const secondToLastChild = this.tbody.querySelector('tr:nth-last-child(2)');
+              console.log(firstChild, secondToLastChild);
+              if (firstChild == null || secondToLastChild == null) return;
+
+              this.tbody.insertBefore(
+                this.tbody.insertBefore(firstChild.nextElementSibling, secondToLastChild)
+                  .nextElementSibling,
+                firstChild.nextElementSibling
+              );
+              return;
+            }
+          }
+        }
+
+        addRows(n = 1000) {
+          const fragment = document.createDocumentFragment();
+
+          while (n > 0) {
+            const tr = this.rowTemplate.content.cloneNode(true);
+            tr.querySelector('td:nth-child(1)').textContent = this.rowId++;
+            tr.querySelector('td:nth-child(2) a').textContent = label();
+            fragment.appendChild(tr);
+            --n;
+          }
+
+          this.tbody.appendChild(fragment);
+        }
+
+        clearRows() {
+          this.tbody.textContent = '';
+          this.selectedRow = null;
+        }
+      }
+
+      customElements.define('word-list', WordList);
+
+      function findClosestIntention(event) {
+        if (event.target instanceof Element) {
+          const attributeName = `on:${event.type}`;
+          const target = event.target.closest(`[${CSS.escape(attributeName)}]`);
+          if (target !== null) {
+            const intention = target.getAttribute(attributeName);
+            return { intention, target };
+          }
+        }
+
+        return {};
+      }
+    </script>
+  </body>
+</html>
