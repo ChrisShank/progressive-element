@@ -1,4 +1,8 @@
+// Also see https://www.npmjs.com/package/html-include-element
+
 export class ServerIsland extends HTMLElement {
+  #internals = this.attachInternals();
+
   async connectedCallback() {
     const src = this.getAttribute('src');
 
@@ -11,6 +15,7 @@ export class ServerIsland extends HTMLElement {
       const frag = document.createRange().createContextualFragment(html);
       this.textContent = ''; // Clear loading content
       this.appendChild(frag);
+      this.#internals.states.add('loaded');
     }
   }
 }
