@@ -138,6 +138,9 @@
     import { findClosestIntention } from '../src/intentions';
     import { ProgressiveElement } from '../src/progressive-element';
 
+    // https://github.com/lichess-org/chessground
+    // https://chessboardjs.com/#start
+
     function getColumnName(index) {
       return 'abcdefghijklmnopqrstuvwxyz'[index % 26];
     }
@@ -249,6 +252,17 @@
           if (squareElement != null) {
             squareElement.piece = piece;
           }
+        }
+      }
+
+      movePiece(fromSquare, toSquare) {
+        const fromSquareEl = this.#pieces.get(fromSquare);
+        const toSquareEl = this.#pieces.get(toSquare);
+
+        if (fromSquare !== undefined && toSquare !== undefined) {
+          const piece = fromSquareEl.piece;
+          fromSquareEl.piece = '';
+          toSquareEl.piece = piece;
         }
       }
     }
