@@ -8,11 +8,11 @@
   <body>
     <h1>Tetris</h1>
     <tetris-game
-      on="keyup.ArrowDown:SOFT_DROP"
-      on="keyup.ArrowRight:MOVE_RIGHT"
-      on="keyup.ArrowLeft:MOVE_LEFT"
-      on="keyup.Space:HARD_DROP"
-      on="keyup.KeyZ:ROTATE"
+      on:keyup.ArrowDown="SOFT_DROP"
+      on:keyup.ArrowRight="MOVE_RIGHT"
+      on:keyup.ArrowLeft="MOVE_LEFT"
+      on:keyup.Space="HARD_DROP"
+      on:keyup.KeyZ="ROTATE"
     >
       <span slot="score">0</span>
     </count-er>

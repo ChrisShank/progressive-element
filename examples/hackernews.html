@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <base href="/examples/hackernews/" />
+    <meta charset="UTF-8" />
+    <title>Hacker News</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="origin" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjE4IiB2aWV3Qm94PSI0IDQgMTg4IDE4OCIgd2lkdGg9IjE4IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGQ9Im00IDRoMTg4djE4OGgtMTg4eiIgZmlsbD0iI2Y2MCIvPjxwYXRoIGQ9Im03My4yNTIxNzU2IDQ1LjAxIDIyLjc0NzgyNDQgNDcuMzkxMzAwODMgMjIuNzQ3ODI0NC00Ny4zOTEzMDA4M2gxOS41NjU2OTYzMWwtMzQuMzIzNTIwNzEgNjQuNDg2NjE0Njh2NDEuNDkzMzg1MzJoLTE1Ljk4di00MS40OTMzODUzMmwtMzQuMzIzNTIwNzEtNjQuNDg2NjE0Njh6IiBmaWxsPSIjZmZmIi8+PC9zdmc+"
+    />
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="rss" />
+    <style>
+      body {
+        font-family: Verdana, Geneva, sans-serif;
+        font-size: 10pt;
+        margin: 0;
+        padding: 0;
+
+        --orange: #ff6600;
+        --grey: #828282;
+        --black: #000000;
+        --off-white: #f6f6ef;
+
+        background-color: var(--off-white);
+      }
+
+      a {
+        text-decoration: none;
+
+        &:link {
+          color: var(--black);
+        }
+        
+        &:visited {
+          color: var(--grey);
+        }
+      }
+
+
+
+      ul.link-list {
+        display: flex;
+        flex-wrap: wrap;
+        list-style-type: none;
+        font-size: 12px;
+        line-height: normal;
+        margin: 0;
+        padding: 0;
+
+        li:not(:last-child) {
+          padding-right: 6px;
+          border-right: 1px solid var(--black);
+          margin-right: 6px;
+        }
+      }
+
+      header {
+        display: flex;
+        gap: 9px;
+        background-color: var(--orange);
+        padding: 2px;
+
+        img {
+          height: 18px;
+          width: 18px;
+          border: solid 1px white;
+          align-self: center;
+        }
+
+        nav {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          margin: 3px 0;
+          min-width: 0;
+
+          h1 {
+            font-size: 15px;
+            grid-area: heading;
+            margin: 0;
+          }
+        }
+
+        &:has(time:not([datetime])) nav ul li:last-child {
+          border-right: unset;
+        }
+
+        a[href^='/login'] {
+          align-self: center;
+          justify-self: end;
+        }
+      }
+
+      main {
+        margin-bottom: 1rem;
+
+        ol {
+          color: var(--grey);
+          list-style: none;
+          padding-inline-start: 0;
+          margin: 0.7rem 0 1rem;
+          counter-reset: item 0;
+
+          > li {
+            counter-increment: item;
+            display: flex;
+            flex-wrap: nowrap;
+            margin-bottom: 5px;
+
+            &::before {
+              display: block;
+              content: counter(item) ".";
+              font-size: 11pt;
+              line-height: 14pt;
+              width: 1.5em;
+              text-align: end;
+            }
+
+            a[href^="vote"] {
+              display: block;
+              width: 0.8em;
+              aspect-ratio: 1;
+              background-color: var(--grey);
+              clip-path: polygon(50% 0, 100% 100%, 0 100%);
+              align-self: start;
+              margin: 4px 6px 0 2px;
+            }
+
+            h2 {
+              display: inline-block;
+              font-size: 11pt;
+              line-height: 14pt;
+              font-weight: normal;
+              color: var(--black);
+              margin: 0 0 1px;
+              word-break: break-word;
+
+              a:nth-child(2) {
+                font-size: 8pt;
+                color: var(--grey);
+
+                &::before {
+                  content: "(";
+                }
+
+                &::after {
+                  content: ")";
+                }
+              }
+            }
+
+            ul.link-list li {
+              border-color: var(--grey);
+              
+              a:link {
+                color: var(--grey)
+              }
+            }
+          }
+        }
+      }
+
+      footer {
+        border-top: solid 2px var(--orange);
+
+        ul.link-list {
+          justify-content: center;
+          margin: 1rem;
+        }
+
+        form {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          margin-bottom: 1rem;
+
+          label {
+            color: var(--grey)
+          }
+          
+          input {
+            font-size: 16px;
+            font-family: monospace;
+          }
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <hacker-news>
+      <header>
+        <img
+          src="data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjE4IiB2aWV3Qm94PSI0IDQgMTg4IDE4OCIgd2lkdGg9IjE4IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGQ9Im00IDRoMTg4djE4OGgtMTg4eiIgZmlsbD0iI2Y2MCIvPjxwYXRoIGQ9Im03My4yNTIxNzU2IDQ1LjAxIDIyLjc0NzgyNDQgNDcuMzkxMzAwODMgMjIuNzQ3ODI0NC00Ny4zOTEzMDA4M2gxOS41NjU2OTYzMWwtMzQuMzIzNTIwNzEgNjQuNDg2NjE0Njh2NDEuNDkzMzg1MzJoLTE1Ljk4di00MS40OTMzODUzMmwtMzQuMzIzNTIwNzEtNjQuNDg2NjE0Njh6IiBmaWxsPSIjZmZmIi8+PC9zdmc+"
+        />
+        <nav>
+          <h1><a href="news">Hacker News</a></h1>
+          <ul class="link-list">
+            <li><a href="newest">new</a></li>
+            <li><a href="front">past</a></li>
+            <li><a href="newcomments">comments</a></li>
+            <li><a href="ask">ask</a></li>
+            <li><a href="show">show</a></li>
+            <li><a href="jobs">jobs</a></li>
+            <li><a href="submit">submit</a></li>
+          </ul>
+        </nav>
+        <time slot="header-date"></time>
+        <!-- handle query param -->
+        <a href="login">login</a>
+      </header>
+
+      <main>
+        <ol>
+          <li>
+            <a href="vote?id=41563363&how=up&goto=news"></a>
+            <div>
+              <h2>
+                <a href="https://www.indystar.com/story">
+                  Indiana police are seizing FedEx packages containing cash
+                </a>
+                <a href="from?site=indystar.com">indystar.com</a>
+              </h2>
+              <ul class="link-list">
+                <li>
+                  203 points by 
+                  <a href="user?id=Drunk_Engineer">Drunk_Engineer</a>
+                  <a href="item?id=41563363">3 hours ago</a>
+                </li>
+                <li><a href="hide?id=41563363&goto=news">hide</a> </li>
+                <li><a href="item?id=41563363">120&nbsp;comments</a></li>
+              </li>
+              </ul>
+            </div>
+          </li>
+        </ol>
+
+        <a href="?p=2">More</a>
+      </main>
+
+      <footer>
+        <ul class="link-list">
+          <li><a href="newsguidelines.html">Guidelines</a></li>
+          <li><a href="newsfaq.html">FAQ</a></li>
+          <li><a href="lists">Lists</a></li>
+          <li><a href="https://github.com/HackerNews/API">API</a></li>
+          <li><a href="security.html">Security</a></li>
+          <li><a href="https://www.ycombinator.com/legal/">Legal</a></li>
+          <li><a href="https://www.ycombinator.com/apply/">Apply to YC</a></li>
+          <li><a href="mailto:hn@ycombinator.com">Contact</a></li>
+        </ul>
+
+        <form method="get" action="//hn.algolia.com/">
+          <label for="search">Search:</label>
+          <input type="text"  id="search" name="search" size="17" autocorrect="off" spellcheck="false" autocapitalize="off" autocomplete="off">
+        </form>
+      </footer>
+    </hacker-news>
+  </body>
+
+  <script type="module">
+    import { ProgressiveElement } from '../src/progressive-element';
+    import { findClosestIntention } from '../src/intentions';
+
+    function createStory({id, username, points, url, site, title, time, comments}, goto) {
+      return `
+<li>
+  <a href="vote?id=${id}&how=up&goto=${goto}"></a>
+  <div>
+    <h2>
+      <a href="${url}">${title}</a>
+      <a href="from?site=${site}">${site}</a>
+    </h2>
+    <ul class="link-list">
+      <li>
+        ${points} points by 
+        <a href="user?id=${username}">${username}</a>
+        <a href="item?id=${id}">${time}</a>
+      </li>
+      <li><a href="hide?id=${id}&goto=${goto}">hide</a> </li>
+      <li><a href="item?id=${id}">${comments} comments</a></li>
+    </li>
+    </ul>
+  </div>
+</li>`
+    }
+
+    class HackerNews extends ProgressiveElement {
+      static tagName = 'hacker-news';
+
+      static delegatedEvents = ['click'];
+
+      headerDate = this.querySelector('[slot="header-date"]');
+
+      handleEvent(event) {
+        const { intention } = findClosestIntention(event);
+
+        switch (intention) {
+          case '': {
+          }
+        }
+      }
+    }
+
+    HackerNews.register();
+  </script>
+</html>
+
+<!-- <script>
+  function $(id) {
+    return document.getElementById(id);
+  }
+  function byClass(el, cl) {
+    return el ? el.getElementsByClassName(cl) : [];
+  }
+  function byTag(el, tg) {
+    return el ? el.getElementsByTagName(tg) : [];
+  }
+  function allof(cl) {
+    return byClass(document, cl);
+  }
+  function classes(el) {
+    return (el && el.className && el.className.split(' ')) || [];
+  }
+  function hasClass(el, cl) {
+    return afind(cl, classes(el));
+  }
+  function addClass(el, cl) {
+    if (el) {
+      var a = classes(el);
+      if (!afind(cl, a)) {
+        a.unshift(cl);
+        el.className = a.join(' ');
+      }
+    }
+  }
+  function remClass(el, cl) {
+    if (el) {
+      var a = classes(el);
+      arem(a, cl);
+      el.className = a.join(' ');
+    }
+  }
+  function uptil(el, f) {
+    if (el) return f(el) ? el : uptil(el.parentNode, f);
+  }
+  function upclass(el, cl) {
+    return uptil(el, function (x) {
+      return hasClass(x, cl);
+    });
+  }
+  function html(el) {
+    return el ? el.innerHTML : null;
+  }
+  function attr(el, name) {
+    return el.getAttribute(name);
+  }
+  function tonum(x) {
+    var n = parseFloat(x);
+    return isNaN(n) ? null : n;
+  }
+  function remEl(el) {
+    el.parentNode.removeChild(el);
+  }
+  function posf(f, a) {
+    for (var i = 0; i < a.length; i++) {
+      if (f(a[i])) return i;
+    }
+    return -1;
+  }
+  function apos(x, a) {
+    return typeof x == 'function' ? posf(x, a) : Array.prototype.indexOf.call(a, x);
+  }
+  function afind(x, a) {
+    var i = apos(x, a);
+    return i >= 0 ? a[i] : null;
+  }
+  function acut(a, m, n) {
+    return Array.prototype.slice.call(a, m, n);
+  }
+  function aeach(fn, a) {
+    return Array.prototype.forEach.call(a, fn);
+  }
+  function arem(a, x) {
+    var i = apos(x, a);
+    if (i >= 0) {
+      a.splice(i, 1);
+    }
+    return a;
+  }
+  function alast(a) {
+    return a[a.length - 1];
+  }
+  function vis(el, on) {
+    if (el) {
+      (on ? remClass : addClass)(el, 'nosee');
+    }
+  }
+  function setshow(el, on) {
+    (on ? remClass : addClass)(el, 'noshow');
+  }
+  function noshow(el) {
+    setshow(el, false);
+  }
+
+  function ind(tr) {
+    var el = byClass(tr, 'ind')[0];
+    return el ? tonum(attr(el, 'indent')) : null;
+  }
+
+  function vurl(id, how, auth, _goto) {
+    return (
+      'vote?id=' +
+      id +
+      '&how=' +
+      how +
+      '&auth=' +
+      auth +
+      '&goto=' +
+      encodeURIComponent(_goto) +
+      '&js=t'
+    );
+  }
+
+  function vote(id, how, auth, _goto) {
+    vis($('up_' + id), how == 'un');
+    vis($('down_' + id), how == 'un');
+    var unv = '';
+    if (how != 'un') {
+      unv =
+        " | <a id='un_" +
+        id +
+        "' class='clicky' " +
+        "href='" +
+        vurl(id, 'un', auth, _goto) +
+        "'>" +
+        (how == 'up' ? 'unvote' : 'undown') +
+        '</a>';
+    }
+    $('unv_' + id).innerHTML = unv;
+    new Image().src = vurl(id, how, auth, _goto);
+  }
+
+  function nextcomm(el) {
+    while ((el = el.nextElementSibling)) {
+      if (hasClass(el, 'comtr')) return el;
+    }
+  }
+
+  function hidekids(tr) {
+    var n = ind(tr);
+    while ((tr = nextcomm(tr)) && ind(tr) > n) {
+      setshow(tr, false);
+    }
+  }
+
+  function showkids(tr) {
+    var m = ind(tr);
+    while ((tr = nextcomm(tr))) {
+      var n = ind(tr);
+      if (n <= m) return;
+      if (n == m + 1) {
+        setshow(tr, true);
+        (hasClass(tr, 'coll') ? hidekids : showkids)(tr);
+      }
+    }
+  }
+
+  function toggleCollapse(id) {
+    var tr = $(id),
+      coll = !hasClass(tr, 'coll');
+    collstate(tr, coll);
+    (coll ? hidekids : showkids)(tr);
+    if ($('logout')) {
+      new Image().src = 'collapse?id=' + id + (coll ? '' : '&un=true');
+    }
+  }
+
+  function collstate(tr, coll) {
+    (coll ? addClass : remClass)(tr, 'coll');
+    vis(byClass(tr, 'votelinks')[0], !coll);
+    setshow(byClass(tr, 'comment')[0], !coll);
+    var el = byClass(tr, 'togg')[0];
+    el.innerHTML = coll ? '[' + attr(el, 'n') + ' more]' : '[–]';
+  }
+
+  function onop() {
+    return attr(byTag(document, 'html')[0], 'op');
+  }
+
+  function ranknum(el) {
+    var s = html(el) || '';
+    var a = s.match(/[0-9]+/);
+    if (a) {
+      return tonum(a[0]);
+    }
+  }
+
+  var n1 = ranknum(allof('rank')[0]) || 1;
+
+  function newstory(pair) {
+    if (pair) {
+      var sp = alast(allof('spacer'));
+      sp.insertAdjacentHTML('afterend', pair[0] + sp.outerHTML);
+      fixranks();
+      if (onop() == 'newest') {
+        var n = ranknum(alast(allof('rank')));
+        allof('morelink')[0].href = 'newest?next=' + pair[1] + '&n=' + (n + 1);
+      }
+    }
+  }
+
+  function fixranks() {
+    var rks = allof('rank');
+    aeach(function (rk) {
+      rk.innerHTML = apos(rk, rks) + n1 + '.';
+    }, rks);
+  }
+
+  function moreurl() {
+    return allof('morelink')[0].href;
+  }
+  function morenext() {
+    return tonum(moreurl().split('next=')[1]);
+  }
+
+  function hidestory(el, id) {
+    for (var i = 0; i < 3; i++) {
+      remEl($(id).nextSibling);
+    }
+    remEl($(id));
+    fixranks();
+    var next = onop() == 'newest' && morenext() ? '&next=' + morenext() : '';
+    var url = el.href.replace('hide', 'snip-story').replace('goto', 'onop');
+    fetch(url + next)
+      .then((r) => r.json())
+      .then(newstory);
+  }
+
+  function onclick(ev) {
+    var el = upclass(ev.target, 'clicky');
+    if (el) {
+      var u = new URL(el.href, location);
+      var p = u.searchParams;
+      if (u.pathname == '/vote') {
+        vote(p.get('id'), p.get('how'), p.get('auth'), p.get('goto'));
+      } else if (u.pathname == '/hide') {
+        hidestory(el, p.get('id'));
+      } else if (hasClass(el, 'togg')) {
+        toggleCollapse(attr(el, 'id'));
+      } else {
+        $(u.hash.substring(1)).scrollIntoView({ behavior: 'smooth' });
+      }
+      ev.stopPropagation();
+      ev.stopImmediatePropagation();
+      ev.preventDefault();
+      return false;
+    }
+  }
+
+  document.addEventListener('click', onclick);
+</script> -->
