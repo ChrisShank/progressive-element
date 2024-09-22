@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kanban Board</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header>
+      <h1>Your Boards</h1>
+    </header>
+  </body>
+
+  <script type="module">
+    import { findClosestIntention } from '../src/intentions';
+    import { ProgressiveElement } from '../src/progressive-element';
+
+    const parser = new DOMParser();
+    function parseHTML(html) {
+      return document.createRange().createContextualFragment(html).firstElementChild;
+    }
+
+    function renderBoard({ id, name, columns }) {
+      return `
+<kanban-board data-id="${id}">
+  <h2><input value="${name}" on:change="UPDATE_BOARD_NAME" /></h2>
+  <label for="filter">Filter: <input value="" name="filter" id="filter" on:input="FILTER_CARDS" /></label>
+  <ul>${columns.map((column) => renderColumn(column)).join('')}</ul>
+  <button on:click="ADD_COLUMN">+</button>
+</kanban-board>
+`;
+    }
+
+    function renderColumn({ id, name, cards }) {
+      return `
+<kanban-column role="listitem" data-id="${id}" draggable="true">
+  <input value="${name}" name="name" on:change="UPDATE_COLUMN_NAME" />
+  <ul>${cards.map((card) => renderCard(card)).join('')}</ul>
+  <button on:click="ADD_CARD">+ Add Item</button>
+</kanban-column>
+`;
+    }
+
+    function renderCard({ id, name, description }) {
+      return `
+<kanban-card role="listitem" data-id="${id}" draggable="true">
+  <input value="${name}" on:change="UPDATE_CARD_NAME" />
+  <button on:click="DELETE_CARD">Delete</button>
+  <textarea
+    placeholder="Add a description"
+    on:change="UPDATE_CARD_DESCRIPTION"
+  >${description}</textarea>
+</kanban-card>`;
+    }
+
+    class KanbanBoard extends ProgressiveElement {
+      static tagName = 'kanban-board';
+
+      static delegatedEvents = ['click', 'change', 'input'];
+
+      #ul = this.querySelector('ul');
+
+      #id = this.dataset.id;
+      get id() {
+        return this.#id;
+      }
+
+      #input = this.querySelector('h2 input');
+      get name() {
+        return this.#input.value;
+      }
+      set name(name) {
+        this.#input.value = name;
+      }
+
+      #filterInput = this.querySelector('input[name="filter"]');
+      get filter() {
+        return this.#filterInput.value;
+      }
+      set filter(filter) {
+        this.#filterInput.value = name;
+      }
+
+      handleEvent(event) {
+        const { intention, target } = findClosestIntention(event);
+
+        switch (intention) {
+          case 'ADD_COLUMN': {
+            this.addColumn({ id: crypto.randomUUID(), name: '', cards: [] });
+            return;
+          }
+          case 'FILTER_CARDS': {
+            const filter = this.filter.toLowerCase();
+            this.querySelectorAll('kanban-card').forEach((card) => {
+              if (
+                card.name.toLowerCase().includes(filter) ||
+                card.description.toLowerCase().includes(filter)
+              ) {
+                card.removeAttribute('hidden');
+              } else {
+                card.setAttribute('hidden', '');
+              }
+            });
+            return;
+          }
+          case 'UPDATE_BOARD_NAME': {
+            return;
+          }
+          case 'UPDATE_COLUMN_NAME': {
+            return;
+          }
+          case 'UPDATE_CARD_NAME': {
+            return;
+          }
+          case 'UPDATE_CARD_DESCRIPTION': {
+            return;
+          }
+          case 'ADD_CARD': {
+            return;
+          }
+          case 'DELETE_CARD': {
+            return;
+          }
+        }
+      }
+
+      addColumn(column) {
+        const newColumn = parseHTML(renderColumn(column));
+        this.#ul.appendChild(newColumn);
+        newColumn.focusName();
+      }
+
+      focusName() {
+        this.#input.focus();
+      }
+
+      toJSON() {
+        const columns = Array.from(this.querySelectorAll('kanban-column')).map((column) =>
+          column.toJSON()
+        );
+        return { id: this.id, name: this.name, columns };
+      }
+    }
+
+    class KanbanColumn extends ProgressiveElement {
+      static tagName = 'kanban-column';
+
+      static delegatedEvents = ['click'];
+
+      #ul = this.querySelector('ul');
+
+      #id = this.dataset.id;
+      get id() {
+        return this.#id;
+      }
+
+      #input = this.querySelector('input');
+      get name() {
+        return this.#input.value;
+      }
+      set name(name) {
+        this.#input.value = name;
+      }
+
+      handleEvent(event) {
+        const { intention, target } = findClosestIntention(event);
+
+        switch (intention) {
+          case 'ADD_CARD': {
+            this.addCard({ id: crypto.randomUUID(), name: '', description: '' });
+            return;
+          }
+        }
+      }
+
+      addCard(card) {
+        const newCard = parseHTML(renderCard(card));
+        this.#ul.appendChild(newCard);
+        newCard.focusName();
+      }
+
+      focusName() {
+        this.#input.focus();
+      }
+
+      toJSON() {
+        const cards = Array.from(this.querySelectorAll('kanban-card')).map((card) => card.toJSON());
+        return { id: this.id, name: this.name, cards };
+      }
+    }
+
+    class KanbanCard extends ProgressiveElement {
+      static tagName = 'kanban-card';
+
+      static delegatedEvents = ['click'];
+
+      #id = this.dataset.id;
+      get id() {
+        return this.#id;
+      }
+
+      #input = this.querySelector('input');
+      get name() {
+        return this.#input.value;
+      }
+      set name(name) {
+        this.#input.value = name;
+      }
+
+      #textarea = this.querySelector('textarea');
+      get description() {
+        return this.#textarea.value;
+      }
+      set description(description) {
+        this.#textarea.value = description;
+      }
+
+      handleEvent(event) {
+        const { intention, target } = findClosestIntention(event);
+
+        switch (intention) {
+          case 'DELETE_CARD': {
+            this.remove();
+            return;
+          }
+        }
+      }
+
+      focusName() {
+        this.#input.focus();
+      }
+
+      toJSON() {
+        return { id: this.id, name: this.name, description: this.description };
+      }
+    }
+
+    KanbanBoard.register();
+    KanbanColumn.register();
+    KanbanCard.register();
+
+    document.body.appendChild(
+      parseHTML(
+        renderBoard({
+          id: crypto.randomUUID(),
+          name: 'Board 1',
+          columns: [
+            {
+              id: crypto.randomUUID(),
+              name: 'Col 1',
+              cards: [
+                {
+                  id: crypto.randomUUID(),
+                  name: 'Card 1.1',
+                  description: 'Something informative.',
+                },
+                { id: crypto.randomUUID(), name: 'Card 1.2', description: 'Something else' },
+                { id: crypto.randomUUID(), name: 'Card 1.3', description: 'Some thing' },
+              ],
+            },
+            {
+              id: crypto.randomUUID(),
+              name: 'Col 2',
+              cards: [
+                { id: crypto.randomUUID(), name: 'Card 2.1', description: 'foo bar' },
+                { id: crypto.randomUUID(), name: 'Card 2.2', description: 'foo baz' },
+                { id: crypto.randomUUID(), name: 'Card 2.3', description: 'bar bar' },
+                { id: crypto.randomUUID(), name: 'Card 2.4', description: 'foo baz bar' },
+              ],
+            },
+          ],
+        })
+      )
+    );
+  </script>
+
+  <style>
+    html {
+      height: 100%;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', system-ui;
+      font-optical-sizing: auto;
+      font-style: normal;
+      height: 100%;
+      margin: 0;
+
+      display: flex;
+      flex-direction: column;
+
+      --bgColor-default: #0d1117;
+      --bgColor-muted: #151b23;
+      --bgColor-inset: #010409;
+      --bgColor-emphasis: #3d444d;
+      --overlay-bgColor: #151b23;
+      --borderColor-default: #3d444d;
+      --transparent-bgColor-hover: #656c7633;
+      --fgColor-muted: #9198a1;
+
+      color: #f0f6fc;
+      background-color: var(--bgColor-default);
+    }
+
+    header {
+      background-color: var(--bgColor-inset);
+      border-bottom: solid 1px var(--borderColor-default);
+      padding: 8px 16px;
+
+      h1 {
+        font-size: 20px;
+        margin: 0;
+      }
+    }
+
+    ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    textarea {
+      field-sizing: content;
+      resize: none;
+
+      &:not(:focus) {
+        max-height: 4lh;
+      }
+    }
+
+    input,
+    textarea {
+      background-color: transparent;
+      border: unset;
+      color: inherit;
+      padding: 0.5rem;
+    }
+
+    button {
+      background-color: transparent;
+      border: unset;
+      border-radius: 6px;
+      color: var(--fgColor-muted);
+      font-size: 18px;
+      padding: 8px 16px;
+      text-align: left;
+
+      &:hover {
+        background-color: var(--transparent-bgColor-hover);
+      }
+    }
+
+    kanban-board {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      padding: 1rem;
+
+      > h2 {
+        margin: 0;
+
+        input {
+          font-size: 22px;
+        }
+      }
+
+      > label {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 0;
+
+        input {
+          border: solid 1px var(--borderColor-default);
+          border-radius: 6px;
+          flex: 1;
+        }
+      }
+
+      > ul {
+        flex: 1;
+        display: flex;
+        gap: 1rem;
+        overflow-x: auto;
+      }
+
+      kanban-column {
+        background-color: var(--bgColor-inset);
+        border: solid 1px var(--borderColor-default);
+        border-radius: 6px;
+        width: 350px;
+        min-width: 350px;
+
+        display: flex;
+        flex-direction: column;
+
+        > ul {
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+          gap: 8px;
+          padding: 8px 16px 4px;
+          overflow-y: auto;
+          scroll-padding-bottom: 7px;
+        }
+      }
+
+      kanban-card {
+        background-color: var(--overlay-bgColor);
+        border: solid 1px var(--borderColor-default);
+        border-radius: 6px;
+        padding: 8px 12px 12px;
+
+        button {
+          font-size: 12px;
+        }
+
+        textarea {
+          width: 100%;
+        }
+      }
+    }
+  </style>
+</html>

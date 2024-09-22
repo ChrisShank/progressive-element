@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Counter</title>
+    <title>Tetris</title>
   </head>
   <body>
     <h1>Tetris</h1>
@@ -15,7 +15,7 @@
       on:keyup.KeyZ="ROTATE"
     >
       <span slot="score">0</span>
-    </count-er>
+    </tetris-game>
   </body>
 
   <script type="module">
@@ -39,7 +39,6 @@
 
         switch (intention) {
           case '': {
-            
           }
         }
       }
@@ -50,8 +49,7 @@
 
   <style>
     tetris-game {
-      [slot="score"] {
-      
+      [slot='score'] {
       }
     }
   </style>
