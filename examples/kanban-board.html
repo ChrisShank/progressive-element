@@ -42,9 +42,12 @@
 <kanban-column 
   role="listitem" 
   data-id="${id}" 
-  on:dragover="DRAG_ENTERING_CARD"
-  on:dragleave="DRAG_LEAVING_CARD"
-  on:drop="DROPPING_CARD"
+  draggable="true" 
+  on:dragstart="START_DRAGGING_COLUMN" 
+  on:dragend="STOP_DRAGGING_COLUMN"
+  on:dragover="DRAG_ENTERING_CARD_OR_COLUMN"
+  on:dragleave="DRAG_LEAVING_CARD_OR_COLUMN"
+  on:drop="DROPPING_CARD_OR_COLUMN"
   >
   <input value="${name}" name="name" on:change="UPDATE_COLUMN_NAME" />
   <ul>${cards.map((card) => renderCard(card)).join('')}</ul>
@@ -170,7 +173,7 @@
     class KanbanColumn extends ProgressiveElement {
       static tagName = 'kanban-column';
 
-      static delegatedEvents = ['click', 'dragover', 'dragleave', 'drop'];
+      static delegatedEvents = ['click', 'dragstart', 'dragend', 'dragover', 'dragleave', 'drop'];
 
       #internals = this.attachInternals();
 
@@ -189,6 +192,24 @@
         this.#input.value = name;
       }
 
+      #acceptDrop = 'none';
+      get acceptDrop() {
+        return this.#acceptDrop;
+      }
+      set acceptDrop(acceptDrop) {
+        if (acceptDrop === this.#acceptDrop) return;
+
+        if (this.#acceptDrop !== 'none') {
+          this.#internals.states.delete(this.#acceptDrop);
+        }
+
+        this.#acceptDrop = acceptDrop;
+
+        if (this.#acceptDrop !== 'none') {
+          this.#internals.states.add(this.#acceptDrop);
+        }
+      }
+
       handleEvent(event) {
         const { intention, target } = findClosestIntention(event);
 
@@ -197,26 +218,53 @@
             this.addCard({ id: crypto.randomUUID(), name: '', description: '' });
             return;
           }
-          case 'DRAG_ENTERING_CARD': {
+          case 'START_DRAGGING_COLUMN': {
+            this.#internals.states.add('dragging');
+            event.dataTransfer.setData(CONTENT_TYPES.COLUMN, this.id);
+            event.dataTransfer.effectAllowed = 'move';
+            return;
+          }
+          case 'STOP_DRAGGING_CARD': {
+            this.#internals.states.delete('dragging');
+            return;
+          }
+          case 'DRAG_ENTERING_CARD_OR_COLUMN': {
             if (event.dataTransfer.types.includes(CONTENT_TYPES.CARD)) {
               event.preventDefault();
               event.stopPropagation();
               this.#internals.states.add('drop-card');
+            } else if (event.dataTransfer.types.includes(CONTENT_TYPES.COLUMN)) {
+              event.preventDefault();
+              event.stopPropagation();
+              let rect = this.getBoundingClientRect();
+              let midpoint = rect.left + rect.width / 2;
+              this.acceptDrop = event.clientX <= midpoint ? 'drop-left' : 'drop-right';
             }
             return;
           }
-          case 'DRAG_LEAVING_CARD': {
+          case 'DRAG_LEAVING_CARD_OR_COLUMN': {
             if (event.dataTransfer.types.includes(CONTENT_TYPES.CARD)) {
               this.#internals.states.delete('drop-card');
+            } else if (event.dataTransfer.types.includes(CONTENT_TYPES.COLUMN)) {
+              this.acceptDrop = 'none';
             }
             return;
           }
-          case 'DROPPING_CARD': {
+          case 'DROPPING_CARD_OR_COLUMN': {
             if (event.dataTransfer.types.includes(CONTENT_TYPES.CARD)) {
               event.stopPropagation();
               const id = event.dataTransfer.getData(CONTENT_TYPES.CARD);
               const card = document.querySelector(`[data-id="${id}"]`);
               this.#ul.appendChild(card);
+            } else if (event.dataTransfer.types.includes(CONTENT_TYPES.COLUMN)) {
+              event.stopPropagation();
+              const id = event.dataTransfer.getData(CONTENT_TYPES.COLUMN);
+              const column = document.querySelector(`[data-id="${id}"]`);
+              this.insertAdjacentElement(
+                this.acceptDrop === 'drop-left' ? 'beforeBegin' : 'afterEnd',
+                column
+              );
+              this.acceptDrop = 'none';
             }
             return;
           }
@@ -268,11 +316,9 @@
       }
 
       #acceptDrop = 'none';
-
       get acceptDrop() {
         return this.#acceptDrop;
       }
-
       set acceptDrop(acceptDrop) {
         if (acceptDrop === this.#acceptDrop) return;
 
@@ -289,7 +335,6 @@
 
       handleEvent(event) {
         const { intention, target } = findClosestIntention(event);
-        console.log(intention);
 
         switch (intention) {
           case 'DELETE_CARD': {
@@ -311,7 +356,7 @@
               event.preventDefault();
               event.stopPropagation();
               let rect = this.getBoundingClientRect();
-              let midpoint = (rect.top + rect.bottom) / 2;
+              let midpoint = rect.top + rect.height / 2;
               this.acceptDrop = event.clientY <= midpoint ? 'drop-above' : 'drop-below';
             }
             return;
@@ -505,13 +550,34 @@
         background-color: var(--bgColor-inset);
         border: solid 1px var(--borderColor-default);
         border-radius: 6px;
+        cursor: move;
         display: flex;
         flex-direction: column;
         min-width: 350px;
+        position: relative;
         width: 350px;
 
         &:state(drop-card) {
           border: 2px solid var(--bgColor-accent-emphasis);
+        }
+
+        &::after {
+          background: var(--bgColor-accent-emphasis);
+          left: 100%;
+          height: 100%;
+          position: absolute;
+          margin: 0 3px;
+          width: 3px;
+        }
+
+        &:state(drop-right) {
+          border-right: 1px solid var(--bgColor-accent-emphasis);
+        }
+
+        > input {
+          font-size: 16px;
+          font-weight: bold;
+          margin: 8px 16px 4px;
         }
 
         > ul {
@@ -529,7 +595,7 @@
         background-color: var(--overlay-bgColor);
         border: solid 1px var(--borderColor-default);
         border-radius: 6px;
-        cursor: grab;
+        cursor: move;
         padding: 8px 12px 12px;
 
         &:state(dragging) {
