@@ -170,7 +170,9 @@
     class KanbanColumn extends ProgressiveElement {
       static tagName = 'kanban-column';
 
-      static delegatedEvents = ['click'];
+      static delegatedEvents = ['click', 'dragover', 'dragleave', 'drop'];
+
+      #internals = this.attachInternals();
 
       #ul = this.querySelector('ul');
 
@@ -193,6 +195,29 @@
         switch (intention) {
           case 'ADD_CARD': {
             this.addCard({ id: crypto.randomUUID(), name: '', description: '' });
+            return;
+          }
+          case 'DRAG_ENTERING_CARD': {
+            if (event.dataTransfer.types.includes(CONTENT_TYPES.CARD)) {
+              event.preventDefault();
+              event.stopPropagation();
+              this.#internals.states.add('drop-card');
+            }
+            return;
+          }
+          case 'DRAG_LEAVING_CARD': {
+            if (event.dataTransfer.types.includes(CONTENT_TYPES.CARD)) {
+              this.#internals.states.delete('drop-card');
+            }
+            return;
+          }
+          case 'DROPPING_CARD': {
+            if (event.dataTransfer.types.includes(CONTENT_TYPES.CARD)) {
+              event.stopPropagation();
+              const id = event.dataTransfer.getData(CONTENT_TYPES.CARD);
+              const card = document.querySelector(`[data-id="${id}"]`);
+              this.#ul.appendChild(card);
+            }
             return;
           }
         }
@@ -480,11 +505,14 @@
         background-color: var(--bgColor-inset);
         border: solid 1px var(--borderColor-default);
         border-radius: 6px;
-        width: 350px;
-        min-width: 350px;
-
         display: flex;
         flex-direction: column;
+        min-width: 350px;
+        width: 350px;
+
+        &:state(drop-card) {
+          border: 2px solid var(--bgColor-accent-emphasis);
+        }
 
         > ul {
           display: flex;
@@ -509,11 +537,11 @@
         }
 
         &:state(drop-above) {
-          border-top: 2px solid var(--bgColor-accent-emphasis);
+          border-top: 1px solid var(--bgColor-accent-emphasis);
         }
 
         &:state(drop-below) {
-          border-bottom: 2px solid var(--bgColor-accent-emphasis);
+          border-bottom: 1px solid var(--bgColor-accent-emphasis);
         }
 
         button {

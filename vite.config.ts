@@ -6,8 +6,10 @@ const examplesDir = resolve(__dirname, 'examples');
 
 export default defineConfig({
   build: {
-    target: 'es2022',
-    modulePreload: false,
+    target: 'esnext',
+    modulePreload: {
+      polyfill: false,
+    },
     rollupOptions: {
       input: readdirSync(examplesDir)
         .filter((file) => file.endsWith('.html'))
