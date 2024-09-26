@@ -45,9 +45,9 @@
   draggable="true" 
   on:dragstart="START_DRAGGING_COLUMN" 
   on:dragend="STOP_DRAGGING_COLUMN"
-  on:dragover="DRAG_ENTERING_CARD_OR_COLUMN"
-  on:dragleave="DRAG_LEAVING_CARD_OR_COLUMN"
-  on:drop="DROPPING_CARD_OR_COLUMN"
+  on:dragover="DRAGGING_OVER_COLUMN"
+  on:dragleave="DRAG_LEAVING_COLUMN"
+  on:drop="DROPPING_ON_COLUMN"
   >
   <input value="${name}" name="name" on:change="UPDATE_COLUMN_NAME" />
   <ul>${cards.map((card) => renderCard(card)).join('')}</ul>
@@ -63,11 +63,11 @@
   draggable="true" 
   on:dragstart="START_DRAGGING_CARD" 
   on:dragend="STOP_DRAGGING_CARD"
-  on:dragover="DRAG_ENTERING_CARD"
+  on:dragover="DRAGGING_OVER_CARD"
   on:dragleave="DRAG_LEAVING_CARD"
-  on:drop="DROPPING_CARD"
+  on:drop="DROPPING_ON_CARD"
 >
-  <input value="${name}" on:change="UPDATE_CARD_NAME" />
+  <input value="${name}" />
   <button on:click="DELETE_CARD">Delete</button>
   <textarea
     placeholder="Add a description"
@@ -84,7 +84,16 @@
     class KanbanBoard extends ProgressiveElement {
       static tagName = 'kanban-board';
 
-      static delegatedEvents = ['click', 'change', 'input'];
+      static delegatedEvents = [
+        'click',
+        'change',
+        'input',
+        'dragstart',
+        'dragend',
+        'dragover',
+        'dragleave',
+        'drop',
+      ];
 
       #ul = this.querySelector('ul');
 
@@ -120,14 +129,10 @@
           case 'FILTER_CARDS': {
             const filter = this.filter.toLowerCase();
             this.querySelectorAll('kanban-card').forEach((card) => {
-              if (
+              card.hidden = !(
                 card.name.toLowerCase().includes(filter) ||
                 card.description.toLowerCase().includes(filter)
-              ) {
-                card.removeAttribute('hidden');
-              } else {
-                card.setAttribute('hidden', '');
-              }
+              );
             });
             return;
           }
@@ -192,6 +197,17 @@
         this.#input.value = name;
       }
 
+      #dragging = false;
+      get dragging() {
+        return this.#dragging;
+      }
+      set dragging(dragging) {
+        this.#dragging = dragging;
+        this.#dragging
+          ? this.#internals.states.add('dragging')
+          : this.#internals.states.delete('dragging');
+      }
+
       #acceptDrop = 'none';
       get acceptDrop() {
         return this.#acceptDrop;
@@ -219,53 +235,56 @@
             return;
           }
           case 'START_DRAGGING_COLUMN': {
-            this.#internals.states.add('dragging');
+            this.dragging = true;
             event.dataTransfer.setData(CONTENT_TYPES.COLUMN, this.id);
             event.dataTransfer.effectAllowed = 'move';
             return;
           }
-          case 'STOP_DRAGGING_CARD': {
-            this.#internals.states.delete('dragging');
+          case 'STOP_DRAGGING_COLUMN': {
+            this.dragging = false;
             return;
           }
-          case 'DRAG_ENTERING_CARD_OR_COLUMN': {
+          case 'DRAGGING_OVER_COLUMN': {
             if (event.dataTransfer.types.includes(CONTENT_TYPES.CARD)) {
               event.preventDefault();
               event.stopPropagation();
-              this.#internals.states.add('drop-card');
+              this.acceptDrop = 'accept-card';
             } else if (event.dataTransfer.types.includes(CONTENT_TYPES.COLUMN)) {
               event.preventDefault();
               event.stopPropagation();
               let rect = this.getBoundingClientRect();
               let midpoint = rect.left + rect.width / 2;
-              this.acceptDrop = event.clientX <= midpoint ? 'drop-left' : 'drop-right';
+              this.acceptDrop =
+                event.clientX <= midpoint ? 'accept-column-left' : 'accept-column-right';
             }
             return;
           }
-          case 'DRAG_LEAVING_CARD_OR_COLUMN': {
+          case 'DRAG_LEAVING_COLUMN': {
             if (event.dataTransfer.types.includes(CONTENT_TYPES.CARD)) {
-              this.#internals.states.delete('drop-card');
+              this.acceptDrop = 'none';
             } else if (event.dataTransfer.types.includes(CONTENT_TYPES.COLUMN)) {
               this.acceptDrop = 'none';
             }
             return;
           }
-          case 'DROPPING_CARD_OR_COLUMN': {
+          case 'DROPPING_ON_COLUMN': {
             if (event.dataTransfer.types.includes(CONTENT_TYPES.CARD)) {
               event.stopPropagation();
               const id = event.dataTransfer.getData(CONTENT_TYPES.CARD);
               const card = document.querySelector(`[data-id="${id}"]`);
-              this.#ul.appendChild(card);
+              this.appendCard(card);
+              this.acceptDrop = 'none';
             } else if (event.dataTransfer.types.includes(CONTENT_TYPES.COLUMN)) {
               event.stopPropagation();
               const id = event.dataTransfer.getData(CONTENT_TYPES.COLUMN);
               const column = document.querySelector(`[data-id="${id}"]`);
               this.insertAdjacentElement(
-                this.acceptDrop === 'drop-left' ? 'beforeBegin' : 'afterEnd',
+                this.acceptDrop === 'accept-column-left' ? 'beforeBegin' : 'afterEnd',
                 column
               );
               this.acceptDrop = 'none';
             }
+
             return;
           }
         }
@@ -273,8 +292,12 @@
 
       addCard(card) {
         const newCard = parseHTML(renderCard(card));
-        this.#ul.appendChild(newCard);
+        this.appendCard(newCard);
         newCard.focusName();
+      }
+
+      appendCard(cardElement) {
+        this.#ul.appendChild(cardElement);
       }
 
       focusName() {
@@ -333,6 +356,17 @@
         }
       }
 
+      #dragging = false;
+      get dragging() {
+        return this.#dragging;
+      }
+      set dragging(dragging) {
+        this.#dragging = dragging;
+        this.#dragging
+          ? this.#internals.states.add('dragging')
+          : this.#internals.states.delete('dragging');
+      }
+
       handleEvent(event) {
         const { intention, target } = findClosestIntention(event);
 
@@ -342,22 +376,23 @@
             return;
           }
           case 'START_DRAGGING_CARD': {
-            this.#internals.states.add('dragging');
-            event.dataTransfer?.setData(CONTENT_TYPES.CARD, this.id);
+            this.dragging = true;
+            event.dataTransfer.setData(CONTENT_TYPES.CARD, this.id);
             event.dataTransfer.effectAllowed = 'move';
             return;
           }
           case 'STOP_DRAGGING_CARD': {
-            this.#internals.states.delete('dragging');
+            this.dragging = false;
             return;
           }
-          case 'DRAG_ENTERING_CARD': {
+          case 'DRAGGING_OVER_CARD': {
             if (event.dataTransfer.types.includes(CONTENT_TYPES.CARD)) {
               event.preventDefault();
               event.stopPropagation();
               let rect = this.getBoundingClientRect();
               let midpoint = rect.top + rect.height / 2;
-              this.acceptDrop = event.clientY <= midpoint ? 'drop-above' : 'drop-below';
+              this.acceptDrop =
+                event.clientY <= midpoint ? 'accept-card-above' : 'accept-card-below';
             }
             return;
           }
@@ -367,13 +402,13 @@
             }
             return;
           }
-          case 'DROPPING_CARD': {
+          case 'DROPPING_ON_CARD': {
             if (event.dataTransfer.types.includes(CONTENT_TYPES.CARD)) {
               event.stopPropagation();
               const id = event.dataTransfer.getData(CONTENT_TYPES.CARD);
               const card = document.querySelector(`[data-id="${id}"]`);
               this.insertAdjacentElement(
-                this.acceptDrop === 'drop-above' ? 'beforeBegin' : 'afterEnd',
+                this.acceptDrop === 'accept-card-above' ? 'beforeBegin' : 'afterEnd',
                 card
               );
               this.acceptDrop = 'none';
@@ -424,6 +459,11 @@
                 { id: crypto.randomUUID(), name: 'Card 2.3', description: 'bar bar' },
                 { id: crypto.randomUUID(), name: 'Card 2.4', description: 'foo baz bar' },
               ],
+            },
+            {
+              id: crypto.randomUUID(),
+              name: 'Col 3',
+              cards: [],
             },
           ],
         })
@@ -557,21 +597,22 @@
         position: relative;
         width: 350px;
 
-        &:state(drop-card) {
+        &:state(dragging) {
+          opacity: 0.5;
+        }
+
+        &:state(accept-card) {
           border: 2px solid var(--bgColor-accent-emphasis);
         }
 
-        &::after {
-          background: var(--bgColor-accent-emphasis);
-          left: 100%;
-          height: 100%;
-          position: absolute;
-          margin: 0 3px;
-          width: 3px;
+        &:state(accept-column-right) {
+          border-width: 2px;
+          border-right-color: var(--bgColor-accent-emphasis);
         }
 
-        &:state(drop-right) {
-          border-right: 1px solid var(--bgColor-accent-emphasis);
+        &:state(accept-column-left) {
+          border-width: 2px;
+          border-left-color: var(--bgColor-accent-emphasis);
         }
 
         > input {
@@ -602,12 +643,12 @@
           opacity: 0.5;
         }
 
-        &:state(drop-above) {
-          border-top: 1px solid var(--bgColor-accent-emphasis);
+        &:state(accept-card-above) {
+          border-top: 2px solid var(--bgColor-accent-emphasis);
         }
 
-        &:state(drop-below) {
-          border-bottom: 1px solid var(--bgColor-accent-emphasis);
+        &:state(accept-card-below) {
+          border-bottom: 2px solid var(--bgColor-accent-emphasis);
         }
 
         button {
