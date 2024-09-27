@@ -6,7 +6,10 @@
     <title>Kanban Board</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <header>
@@ -15,12 +18,13 @@
   </body>
 
   <script type="module">
-    import { findClosestIntention } from '../src/intentions';
-    import { ProgressiveElement } from '../src/progressive-element';
+    import { findClosestIntention } from "../src/intentions";
+    import { ProgressiveElement } from "../src/progressive-element";
 
     const parser = new DOMParser();
     function parseHTML(html) {
-      return document.createRange().createContextualFragment(html).firstElementChild;
+      return document.createRange().createContextualFragment(html)
+        .firstElementChild;
     }
 
     function renderBoard({ id, name, columns }) {
@@ -28,7 +32,7 @@
 <kanban-board data-id="${id}">
   <h2><input value="${name}" on:change="UPDATE_BOARD_NAME" /></h2>
   <label for="filter">Filter: <input value="" name="filter" id="filter" on:input="FILTER_CARDS" /></label>
-  <ul>${columns.map((column) => renderColumn(column)).join('')}</ul>
+  <ul>${columns.map((column) => renderColumn(column)).join("")}</ul>
   <button on:click="ADD_COLUMN">+</button>
 </kanban-board>`;
     }
@@ -46,7 +50,7 @@
   on:drop="DROPPING_ON_COLUMN"
   >
   <input value="${name}" name="name" on:change="UPDATE_COLUMN_NAME" />
-  <ul>${cards.map((card) => renderCard(card)).join('')}</ul>
+  <ul>${cards.map((card) => renderCard(card)).join("")}</ul>
   <button on:click="ADD_CARD">+ Add Item</button>
 </kanban-column>`;
     }
@@ -72,23 +76,32 @@
     }
 
     const CONTENT_TYPES = {
-      COLUMN: 'text/kanban-column',
-      CARD: 'text/kanban-card',
+      COLUMN: "text/kanban-column",
+      CARD: "text/kanban-card",
     };
 
     class KanbanBoard extends ProgressiveElement {
-      static tagName = 'kanban-board';
+      static tagName = "kanban-board";
 
-      static delegatedEvents = ['click', 'change', 'input', 'dragstart', 'dragend', 'dragover', 'dragleave', 'drop'];
+      static delegatedEvents = [
+        "click",
+        "change",
+        "input",
+        "dragstart",
+        "dragend",
+        "dragover",
+        "dragleave",
+        "drop",
+      ];
 
-      #ul = this.querySelector('ul');
+      #ul = this.querySelector("ul");
 
       #id = this.dataset.id;
       get id() {
         return this.#id;
       }
 
-      #input = this.querySelector('h2 input');
+      #input = this.querySelector("h2 input");
       get name() {
         return this.#input.value;
       }
@@ -108,137 +121,159 @@
         const { intention, target } = findClosestIntention(event);
 
         switch (intention) {
-          case 'UPDATE_BOARD_NAME': {
+          case "UPDATE_BOARD_NAME": {
             return;
           }
-          case 'ADD_COLUMN': {
-            this.addColumn({ id: crypto.randomUUID(), name: '', cards: [] });
+          case "ADD_COLUMN": {
+            this.addColumn({ id: crypto.randomUUID(), name: "", cards: [] });
             return;
           }
-          case 'FILTER_CARDS': {
+          case "FILTER_CARDS": {
             const filter = this.filter.toLowerCase();
-            this.querySelectorAll('kanban-card').forEach((card) => {
+            this.querySelectorAll("kanban-card").forEach((card) => {
               card.hidden = !(
-                card.name.toLowerCase().includes(filter) || card.description.toLowerCase().includes(filter)
+                card.name.toLowerCase().includes(filter) ||
+                card.description.toLowerCase().includes(filter)
               );
             });
             return;
           }
-          case 'UPDATE_CARD_NAME': {
+          case "UPDATE_CARD_NAME": {
             return;
           }
-          case 'UPDATE_CARD_DESCRIPTION': {
+          case "UPDATE_CARD_DESCRIPTION": {
             return;
           }
-          case 'DELETE_CARD': {
+          case "DELETE_CARD": {
             const card = target.closest(KanbanCard.tagName);
             card.remove();
             return;
           }
-          case 'START_DRAGGING_CARD': {
+          case "START_DRAGGING_CARD": {
+            document.activeElement.blur();
             const card = target.closest(KanbanCard.tagName);
             card.dragging = true;
             event.dataTransfer.setData(CONTENT_TYPES.CARD, card.id);
-            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.effectAllowed = "move";
             return;
           }
-          case 'STOP_DRAGGING_CARD': {
+          case "STOP_DRAGGING_CARD": {
             const card = target.closest(KanbanCard.tagName);
             card.dragging = false;
             return;
           }
-          case 'DRAGGING_OVER_CARD': {
+          case "DRAGGING_OVER_CARD": {
             if (event.dataTransfer.types.includes(CONTENT_TYPES.CARD)) {
               const card = target.closest(KanbanCard.tagName);
               event.preventDefault();
               event.stopPropagation();
               let rect = card.getBoundingClientRect();
               let midpoint = rect.top + rect.height / 2;
-              card.acceptDrop = event.clientY <= midpoint ? 'accept-card-above' : 'accept-card-below';
+              card.acceptDrop =
+                event.clientY <= midpoint
+                  ? "accept-card-above"
+                  : "accept-card-below";
             }
             return;
           }
-          case 'DRAG_LEAVING_CARD': {
+          case "DRAG_LEAVING_CARD": {
             if (event.dataTransfer.types.includes(CONTENT_TYPES.CARD)) {
               const card = target.closest(KanbanCard.tagName);
-              card.acceptDrop = 'none';
+              card.acceptDrop = "none";
             }
             return;
           }
-          case 'DROPPING_ON_CARD': {
+          case "DROPPING_ON_CARD": {
             if (event.dataTransfer.types.includes(CONTENT_TYPES.CARD)) {
               const card = target.closest(KanbanCard.tagName);
               const id = event.dataTransfer.getData(CONTENT_TYPES.CARD);
               const droppedCard = document.querySelector(`[data-id="${id}"]`);
               card.insertAdjacentElement(
-                card.acceptDrop === 'accept-card-above' ? 'beforeBegin' : 'afterEnd',
+                card.acceptDrop === "accept-card-above"
+                  ? "beforeBegin"
+                  : "afterEnd",
                 droppedCard
               );
-              card.acceptDrop = 'none';
+              card.acceptDrop = "none";
             }
             return;
           }
-          case 'UPDATE_COLUMN_NAME': {
+          case "UPDATE_COLUMN_NAME": {
             return;
           }
-          case 'ADD_CARD': {
+          case "ADD_CARD": {
             const column = target.closest(KanbanColumn.tagName);
-            column.addCard({ id: crypto.randomUUID(), name: '', description: '' });
+            column.addCard({
+              id: crypto.randomUUID(),
+              name: "",
+              description: "",
+            });
             return;
           }
-          case 'START_DRAGGING_COLUMN': {
+          case "START_DRAGGING_COLUMN": {
             const column = target.closest(KanbanColumn.tagName);
             column.dragging = true;
             event.dataTransfer.setData(CONTENT_TYPES.COLUMN, column.id);
-            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.effectAllowed = "move";
             return;
           }
-          case 'STOP_DRAGGING_COLUMN': {
+          case "STOP_DRAGGING_COLUMN": {
             const column = target.closest(KanbanColumn.tagName);
             column.dragging = false;
             return;
           }
-          case 'DRAGGING_OVER_COLUMN': {
+          case "DRAGGING_OVER_COLUMN": {
             const column = target.closest(KanbanColumn.tagName);
             if (event.dataTransfer.types.includes(CONTENT_TYPES.CARD)) {
               event.preventDefault();
               event.stopPropagation();
-              column.acceptDrop = 'accept-card';
-            } else if (event.dataTransfer.types.includes(CONTENT_TYPES.COLUMN)) {
+              column.acceptDrop = "accept-card";
+            } else if (
+              event.dataTransfer.types.includes(CONTENT_TYPES.COLUMN)
+            ) {
               event.preventDefault();
               event.stopPropagation();
               let rect = column.getBoundingClientRect();
               let midpoint = rect.left + rect.width / 2;
-              column.acceptDrop = event.clientX <= midpoint ? 'accept-column-left' : 'accept-column-right';
+              column.acceptDrop =
+                event.clientX <= midpoint
+                  ? "accept-column-left"
+                  : "accept-column-right";
             }
             return;
           }
-          case 'DRAG_LEAVING_COLUMN': {
+          case "DRAG_LEAVING_COLUMN": {
             const column = target.closest(KanbanColumn.tagName);
             if (event.dataTransfer.types.includes(CONTENT_TYPES.CARD)) {
-              column.acceptDrop = 'none';
-            } else if (event.dataTransfer.types.includes(CONTENT_TYPES.COLUMN)) {
-              column.acceptDrop = 'none';
+              column.acceptDrop = "none";
+            } else if (
+              event.dataTransfer.types.includes(CONTENT_TYPES.COLUMN)
+            ) {
+              column.acceptDrop = "none";
             }
             return;
           }
-          case 'DROPPING_ON_COLUMN': {
+          case "DROPPING_ON_COLUMN": {
             const column = target.closest(KanbanColumn.tagName);
             if (event.dataTransfer.types.includes(CONTENT_TYPES.CARD)) {
               event.stopPropagation();
               const id = event.dataTransfer.getData(CONTENT_TYPES.CARD);
               const card = document.querySelector(`[data-id="${id}"]`);
               column.appendCard(card);
-              column.acceptDrop = 'none';
-            } else if (event.dataTransfer.types.includes(CONTENT_TYPES.COLUMN)) {
+              column.acceptDrop = "none";
+            } else if (
+              event.dataTransfer.types.includes(CONTENT_TYPES.COLUMN)
+            ) {
               event.stopPropagation();
               const id = event.dataTransfer.getData(CONTENT_TYPES.COLUMN);
               const droppedColumn = document.querySelector(`[data-id="${id}"]`);
               column.insertAdjacentElement(
-                column.acceptDrop === 'accept-column-left' ? 'beforeBegin' : 'afterEnd',
+                column.acceptDrop === "accept-column-left"
+                  ? "beforeBegin"
+                  : "afterEnd",
                 droppedColumn
               );
-              column.acceptDrop = 'none';
+              column.acceptDrop = "none";
             }
             return;
           }
@@ -256,24 +291,26 @@
       }
 
       toJSON() {
-        const columns = Array.from(this.querySelectorAll('kanban-column')).map((column) => column.toJSON());
+        const columns = Array.from(this.querySelectorAll("kanban-column")).map(
+          (column) => column.toJSON()
+        );
         return { id: this.id, name: this.name, columns };
       }
     }
 
     class KanbanColumn extends ProgressiveElement {
-      static tagName = 'kanban-column';
+      static tagName = "kanban-column";
 
       #internals = this.attachInternals();
 
-      #ul = this.querySelector('ul');
+      #ul = this.querySelector("ul");
 
       #id = this.dataset.id;
       get id() {
         return this.#id;
       }
 
-      #input = this.querySelector('input');
+      #input = this.querySelector("input");
       get name() {
         return this.#input.value;
       }
@@ -287,23 +324,25 @@
       }
       set dragging(dragging) {
         this.#dragging = dragging;
-        this.#dragging ? this.#internals.states.add('dragging') : this.#internals.states.delete('dragging');
+        this.#dragging
+          ? this.#internals.states.add("dragging")
+          : this.#internals.states.delete("dragging");
       }
 
-      #acceptDrop = 'none';
+      #acceptDrop = "none";
       get acceptDrop() {
         return this.#acceptDrop;
       }
       set acceptDrop(acceptDrop) {
         if (acceptDrop === this.#acceptDrop) return;
 
-        if (this.#acceptDrop !== 'none') {
+        if (this.#acceptDrop !== "none") {
           this.#internals.states.delete(this.#acceptDrop);
         }
 
         this.#acceptDrop = acceptDrop;
 
-        if (this.#acceptDrop !== 'none') {
+        if (this.#acceptDrop !== "none") {
           this.#internals.states.add(this.#acceptDrop);
         }
       }
@@ -323,22 +362,24 @@
       }
 
       toJSON() {
-        const cards = Array.from(this.querySelectorAll('kanban-card')).map((card) => card.toJSON());
+        const cards = Array.from(this.querySelectorAll("kanban-card")).map(
+          (card) => card.toJSON()
+        );
         return { id: this.id, name: this.name, cards };
       }
     }
 
     class KanbanCard extends ProgressiveElement {
-      static tagName = 'kanban-card';
+      static tagName = "kanban-card";
 
       #internals = this.attachInternals();
 
-      #id = this.dataset.id || '';
+      #id = this.dataset.id || "";
       get id() {
         return this.#id;
       }
 
-      #input = this.querySelector('input');
+      #input = this.querySelector("input");
       get name() {
         return this.#input.value;
       }
@@ -346,7 +387,7 @@
         this.#input.value = name;
       }
 
-      #textarea = this.querySelector('textarea');
+      #textarea = this.querySelector("textarea");
       get description() {
         return this.#textarea.value;
       }
@@ -354,20 +395,20 @@
         this.#textarea.value = description;
       }
 
-      #acceptDrop = 'none';
+      #acceptDrop = "none";
       get acceptDrop() {
         return this.#acceptDrop;
       }
       set acceptDrop(acceptDrop) {
         if (acceptDrop === this.#acceptDrop) return;
 
-        if (this.#acceptDrop !== 'none') {
+        if (this.#acceptDrop !== "none") {
           this.#internals.states.delete(this.#acceptDrop);
         }
 
         this.#acceptDrop = acceptDrop;
 
-        if (this.#acceptDrop !== 'none') {
+        if (this.#acceptDrop !== "none") {
           this.#internals.states.add(this.#acceptDrop);
         }
       }
@@ -378,7 +419,9 @@
       }
       set dragging(dragging) {
         this.#dragging = dragging;
-        this.#dragging ? this.#internals.states.add('dragging') : this.#internals.states.delete('dragging');
+        this.#dragging
+          ? this.#internals.states.add("dragging")
+          : this.#internals.states.delete("dragging");
       }
 
       focusName() {
@@ -398,34 +441,58 @@
       parseHTML(
         renderBoard({
           id: crypto.randomUUID(),
-          name: 'Board 1',
+          name: "Board 1",
           columns: [
             {
               id: crypto.randomUUID(),
-              name: 'Col 1',
+              name: "Col 1",
               cards: [
                 {
                   id: crypto.randomUUID(),
-                  name: 'Card 1.1',
-                  description: 'Something informative.',
+                  name: "Card 1.1",
+                  description: "Something informative.",
                 },
-                { id: crypto.randomUUID(), name: 'Card 1.2', description: 'Something else' },
-                { id: crypto.randomUUID(), name: 'Card 1.3', description: 'Some thing' },
+                {
+                  id: crypto.randomUUID(),
+                  name: "Card 1.2",
+                  description: "Something else",
+                },
+                {
+                  id: crypto.randomUUID(),
+                  name: "Card 1.3",
+                  description: "Some thing",
+                },
               ],
             },
             {
               id: crypto.randomUUID(),
-              name: 'Col 2',
+              name: "Col 2",
               cards: [
-                { id: crypto.randomUUID(), name: 'Card 2.1', description: 'foo bar' },
-                { id: crypto.randomUUID(), name: 'Card 2.2', description: 'foo baz' },
-                { id: crypto.randomUUID(), name: 'Card 2.3', description: 'bar bar' },
-                { id: crypto.randomUUID(), name: 'Card 2.4', description: 'foo baz bar' },
+                {
+                  id: crypto.randomUUID(),
+                  name: "Card 2.1",
+                  description: "foo bar",
+                },
+                {
+                  id: crypto.randomUUID(),
+                  name: "Card 2.2",
+                  description: "foo baz",
+                },
+                {
+                  id: crypto.randomUUID(),
+                  name: "Card 2.3",
+                  description: "bar bar",
+                },
+                {
+                  id: crypto.randomUUID(),
+                  name: "Card 2.4",
+                  description: "foo baz bar",
+                },
               ],
             },
             {
               id: crypto.randomUUID(),
-              name: 'Col 3',
+              name: "Col 3",
               cards: [],
             },
           ],
@@ -444,7 +511,7 @@
     }
 
     body {
-      font-family: 'Inter', system-ui;
+      font-family: "Inter", system-ui;
       font-optical-sizing: auto;
       font-style: normal;
       height: 100%;
