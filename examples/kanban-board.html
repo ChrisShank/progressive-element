@@ -136,7 +136,7 @@
             return;
           }
           case 'START_DRAGGING_CARD': {
-            document.activeElement.blur();
+            document.activeElement?.blur();
             const card = target.closest(KanbanCard.tagName);
             card.dragging = true;
             event.dataTransfer.setData(CONTENT_TYPES.CARD, card.id);
