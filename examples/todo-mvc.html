@@ -21,13 +21,13 @@
         <section>
           <ul id="filters">
             <li>
-              <a href="#all" on:click="FILTER" filter="all">All</a>
+              <a id="all" href="#all" on:click="FILTER">All</a>
             </li>
             <li>
-              <a href="#active" on:click="FILTER" filter="active">Active</a>
+              <a id="active" href="#active" on:click="FILTER">Active</a>
             </li>
             <li>
-              <a href="#completed" on:click="FILTER" filter="completed">Completed</a>
+              <a id="completed" href="#completed" on:click="FILTER">Completed</a>
             </li>
           </ul>
           <ul id="todos"></ul>
@@ -69,9 +69,9 @@
 
       connectedCallback() {
         // If there is no filter attribute, try it extract it from the URL's hash.
-        if (!this.hasAttribute('filter')) {
-          const value = location.hash.replace('#', '') || 'all';
-          this.setAttribute('filter', value);
+        console.log(location.hash);
+        if (location.hash === '') {
+          location.hash = 'all';
         }
 
         const todos = JSON.parse(localStorage.getItem('todos') || '[]');
@@ -98,11 +98,6 @@
             break;
           }
           case 'FILTER': {
-            const value = target.getAttribute('filter');
-
-            if (!value) return;
-
-            this.setAttribute('filter', value);
             break;
           }
           case 'MARK_ALL_COMPLETED': {
@@ -297,6 +292,10 @@
             &:hover {
               border-color: rgba(175, 47, 47, 0.1);
             }
+
+            &:target {
+              border-color: rgba(175, 47, 47, 0.3);
+            }
           }
         }
 
@@ -355,20 +354,13 @@
           left: 0;
           height: 50px;
           overflow: hidden;
-          box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2), 0 8px 0 -3px #f6f6f6,
-            0 9px 1px -3px rgba(0, 0, 0, 0.2), 0 16px 0 -6px #f6f6f6,
-            0 17px 2px -6px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2), 0 8px 0 -3px #f6f6f6, 0 9px 1px -3px rgba(0, 0, 0, 0.2),
+            0 16px 0 -6px #f6f6f6, 0 17px 2px -6px rgba(0, 0, 0, 0.2);
         }
       }
 
-      &[filter='all'] #filters a[filter='all'],
-      &[filter='active'] #filters a[filter='active'],
-      &[filter='completed'] #filters a[filter='completed'] {
-        border-color: rgba(175, 47, 47, 0.3);
-      }
-
-      &[filter='active'] #todos li:has(input[type='checkbox']:checked),
-      &[filter='completed'] #todos li:has(input[type='checkbox']:not(:checked)) {
+      &:has(a[href='#active']:target) #todos li:has(input[type='checkbox']:checked),
+      &:has(a[href='#completed']:target) #todos li:has(input[type='checkbox']:not(:checked)) {
         display: none;
       }
     }
