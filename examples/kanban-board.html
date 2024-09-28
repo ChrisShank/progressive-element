@@ -7,10 +7,202 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
+    <style>
+      html {
+        height: 100%;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Inter', system-ui;
+        font-optical-sizing: auto;
+        font-style: normal;
+        height: 100%;
+        margin: 0;
+
+        display: flex;
+        flex-direction: column;
+
+        --bgColor-default: #0d1117;
+        --bgColor-muted: #151b23;
+        --bgColor-inset: #010409;
+        --bgColor-emphasis: #3d444d;
+        --overlay-bgColor: #151b23;
+        --borderColor-default: #3d444d;
+        --transparent-bgColor-hover: #656c7633;
+        --fgColor-muted: #9198a1;
+        --bgColor-accent-emphasis: #1f6feb;
+
+        color: #f0f6fc;
+        background-color: var(--bgColor-default);
+      }
+
+      header {
+        background-color: var(--bgColor-inset);
+        border-bottom: solid 1px var(--borderColor-default);
+        padding: 8px 16px;
+
+        h1 {
+          font-size: 20px;
+          margin: 0;
+        }
+      }
+
+      ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      textarea {
+        field-sizing: content;
+        resize: none;
+
+        &:not(:focus) {
+          max-height: 4lh;
+        }
+      }
+
+      input,
+      textarea {
+        background-color: transparent;
+        border: unset;
+        color: inherit;
+        padding: 0.5rem;
+      }
+
+      button {
+        background-color: transparent;
+        border: unset;
+        border-radius: 6px;
+        color: var(--fgColor-muted);
+        font-size: 18px;
+        padding: 8px 16px;
+        text-align: left;
+
+        &:hover {
+          background-color: var(--transparent-bgColor-hover);
+        }
+      }
+
+      kanban-board {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        min-height: 0; /* Makes the columns overflow if there are too many cards. */
+        padding: 1rem;
+
+        > h2 {
+          margin: 0;
+
+          input {
+            font-size: 22px;
+          }
+        }
+
+        > label {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          padding: 1rem 0;
+
+          input {
+            border: solid 1px var(--borderColor-default);
+            border-radius: 6px;
+            flex: 1;
+          }
+        }
+
+        > ul {
+          flex: 1;
+          display: flex;
+          gap: 1rem;
+          overflow-x: auto;
+        }
+
+        kanban-column {
+          background-color: var(--bgColor-inset);
+          border: solid 1px var(--borderColor-default);
+          border-radius: 6px;
+          cursor: move;
+          display: flex;
+          flex-direction: column;
+          min-width: 350px;
+          overflow-y: auto;
+          position: relative;
+          width: 350px;
+
+          &:state(dragging) {
+            opacity: 0.5;
+          }
+
+          &:state(accept-card) {
+            border: 2px solid var(--bgColor-accent-emphasis);
+          }
+
+          &:state(accept-column-right) {
+            border-width: 2px;
+            border-right-color: var(--bgColor-accent-emphasis);
+          }
+
+          &:state(accept-column-left) {
+            border-width: 2px;
+            border-left-color: var(--bgColor-accent-emphasis);
+          }
+
+          > input {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 8px 16px 4px;
+          }
+
+          > ul {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            gap: 8px;
+            padding: 8px 16px 4px;
+            overflow-y: auto;
+            scroll-padding-bottom: 7px;
+          }
+        }
+
+        kanban-card {
+          background-color: var(--overlay-bgColor);
+          border: solid 1px var(--borderColor-default);
+          border-radius: 6px;
+          cursor: move;
+          padding: 8px 12px 12px;
+
+          &:state(dragging) {
+            opacity: 0.5;
+          }
+
+          &:state(accept-card-above) {
+            border-top: 2px solid var(--bgColor-accent-emphasis);
+          }
+
+          &:state(accept-card-below) {
+            border-bottom: 2px solid var(--bgColor-accent-emphasis);
+          }
+
+          button {
+            font-size: 12px;
+          }
+
+          textarea {
+            width: 100%;
+          }
+        }
+      }
+    </style>
   </head>
   <body>
     <header>
-      <h1>Your Boards</h1>
+      <h1>Vrello</h1>
     </header>
   </body>
 
@@ -422,6 +614,13 @@
                 { id: crypto.randomUUID(), name: 'Card 2.2', description: 'foo baz' },
                 { id: crypto.randomUUID(), name: 'Card 2.3', description: 'bar bar' },
                 { id: crypto.randomUUID(), name: 'Card 2.4', description: 'foo baz bar' },
+                { id: crypto.randomUUID(), name: 'Card 2.5', description: 'foo bar' },
+                { id: crypto.randomUUID(), name: 'Card 2.6', description: 'foo baz' },
+                { id: crypto.randomUUID(), name: 'Card 2.7', description: 'bar bar' },
+                { id: crypto.randomUUID(), name: 'Card 2.8', description: 'foo baz bar' },
+                { id: crypto.randomUUID(), name: 'Card 2.9', description: 'foo baz bar' },
+                { id: crypto.randomUUID(), name: 'Card 2.10', description: 'foo baz bar' },
+                { id: crypto.randomUUID(), name: 'Card 2.11', description: 'foo baz bar' },
               ],
             },
             {
@@ -434,195 +633,4 @@
       )
     );
   </script>
-
-  <style>
-    html {
-      height: 100%;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Inter', system-ui;
-      font-optical-sizing: auto;
-      font-style: normal;
-      height: 100%;
-      margin: 0;
-
-      display: flex;
-      flex-direction: column;
-
-      --bgColor-default: #0d1117;
-      --bgColor-muted: #151b23;
-      --bgColor-inset: #010409;
-      --bgColor-emphasis: #3d444d;
-      --overlay-bgColor: #151b23;
-      --borderColor-default: #3d444d;
-      --transparent-bgColor-hover: #656c7633;
-      --fgColor-muted: #9198a1;
-      --bgColor-accent-emphasis: #1f6feb;
-
-      color: #f0f6fc;
-      background-color: var(--bgColor-default);
-    }
-
-    header {
-      background-color: var(--bgColor-inset);
-      border-bottom: solid 1px var(--borderColor-default);
-      padding: 8px 16px;
-
-      h1 {
-        font-size: 20px;
-        margin: 0;
-      }
-    }
-
-    ul {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-    }
-
-    textarea {
-      field-sizing: content;
-      resize: none;
-
-      &:not(:focus) {
-        max-height: 4lh;
-      }
-    }
-
-    input,
-    textarea {
-      background-color: transparent;
-      border: unset;
-      color: inherit;
-      padding: 0.5rem;
-    }
-
-    button {
-      background-color: transparent;
-      border: unset;
-      border-radius: 6px;
-      color: var(--fgColor-muted);
-      font-size: 18px;
-      padding: 8px 16px;
-      text-align: left;
-
-      &:hover {
-        background-color: var(--transparent-bgColor-hover);
-      }
-    }
-
-    kanban-board {
-      display: flex;
-      flex: 1;
-      flex-direction: column;
-      padding: 1rem;
-
-      > h2 {
-        margin: 0;
-
-        input {
-          font-size: 22px;
-        }
-      }
-
-      > label {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        padding: 1rem 0;
-
-        input {
-          border: solid 1px var(--borderColor-default);
-          border-radius: 6px;
-          flex: 1;
-        }
-      }
-
-      > ul {
-        flex: 1;
-        display: flex;
-        gap: 1rem;
-        overflow-x: auto;
-      }
-
-      kanban-column {
-        background-color: var(--bgColor-inset);
-        border: solid 1px var(--borderColor-default);
-        border-radius: 6px;
-        cursor: move;
-        display: flex;
-        flex-direction: column;
-        min-width: 350px;
-        position: relative;
-        width: 350px;
-
-        &:state(dragging) {
-          opacity: 0.5;
-        }
-
-        &:state(accept-card) {
-          border: 2px solid var(--bgColor-accent-emphasis);
-        }
-
-        &:state(accept-column-right) {
-          border-width: 2px;
-          border-right-color: var(--bgColor-accent-emphasis);
-        }
-
-        &:state(accept-column-left) {
-          border-width: 2px;
-          border-left-color: var(--bgColor-accent-emphasis);
-        }
-
-        > input {
-          font-size: 16px;
-          font-weight: bold;
-          margin: 8px 16px 4px;
-        }
-
-        > ul {
-          display: flex;
-          flex-direction: column;
-          flex: 1;
-          gap: 8px;
-          padding: 8px 16px 4px;
-          overflow-y: auto;
-          scroll-padding-bottom: 7px;
-        }
-      }
-
-      kanban-card {
-        background-color: var(--overlay-bgColor);
-        border: solid 1px var(--borderColor-default);
-        border-radius: 6px;
-        cursor: move;
-        padding: 8px 12px 12px;
-
-        &:state(dragging) {
-          opacity: 0.5;
-        }
-
-        &:state(accept-card-above) {
-          border-top: 2px solid var(--bgColor-accent-emphasis);
-        }
-
-        &:state(accept-card-below) {
-          border-bottom: 2px solid var(--bgColor-accent-emphasis);
-        }
-
-        button {
-          font-size: 12px;
-        }
-
-        textarea {
-          width: 100%;
-        }
-      }
-    }
-  </style>
 </html>
