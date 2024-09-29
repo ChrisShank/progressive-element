@@ -71,7 +71,7 @@
         background-color: transparent;
         border: unset;
         color: inherit;
-        padding: 0.5rem;
+        padding: 0.25rem;
       }
 
       button {
@@ -80,7 +80,7 @@
         border-radius: 6px;
         color: var(--fgColor-muted);
         font-size: 18px;
-        padding: 8px 16px;
+        padding: 8px 8px;
         text-align: left;
 
         &:hover {
@@ -89,13 +89,20 @@
       }
 
       kanban-board {
-        display: flex;
+        display: grid;
         flex: 1;
-        flex-direction: column;
+        grid-template-areas:
+          'heading heading'
+          'filter add-column'
+          'columns columns';
+        grid-template-rows: auto auto 1fr;
+        grid-template-columns: 1fr auto;
+        gap: 1rem;
         min-height: 0; /* Makes the columns overflow if there are too many cards. */
         padding: 1rem;
 
         > h2 {
+          grid-area: heading;
           margin: 0;
 
           input {
@@ -104,10 +111,10 @@
         }
 
         > label {
+          grid-area: filter;
           display: flex;
           align-items: center;
           gap: 1rem;
-          padding: 1rem 0;
 
           input {
             border: solid 1px var(--borderColor-default);
@@ -117,85 +124,92 @@
         }
 
         > ul {
+          grid-area: columns;
           flex: 1;
           display: flex;
           gap: 1rem;
           overflow-x: auto;
         }
 
-        kanban-column {
-          background-color: var(--bgColor-inset);
-          border: solid 1px var(--borderColor-default);
-          border-radius: 6px;
-          cursor: move;
-          display: flex;
-          flex-direction: column;
-          min-width: 350px;
-          overflow-y: auto;
-          position: relative;
-          width: 350px;
+        > button {
+          grid-area: add-column;
+          justify-self: center;
+          align-self: center;
+        }
+      }
 
-          &:state(dragging) {
-            opacity: 0.5;
-          }
+      kanban-column {
+        background-color: var(--bgColor-inset);
+        border: solid 1px var(--borderColor-default);
+        border-radius: 6px;
+        cursor: move;
+        display: flex;
+        flex-direction: column;
+        min-width: 350px;
+        overflow-y: auto;
+        position: relative;
+        width: 350px;
 
-          &:state(accept-card) {
-            border: 2px solid var(--bgColor-accent-emphasis);
-          }
-
-          &:state(accept-column-right) {
-            border-width: 2px;
-            border-right-color: var(--bgColor-accent-emphasis);
-          }
-
-          &:state(accept-column-left) {
-            border-width: 2px;
-            border-left-color: var(--bgColor-accent-emphasis);
-          }
-
-          > input {
-            font-size: 16px;
-            font-weight: bold;
-            margin: 8px 16px 4px;
-          }
-
-          > ul {
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-            gap: 8px;
-            padding: 8px 16px 4px;
-            overflow-y: auto;
-            scroll-padding-bottom: 7px;
-          }
+        &:state(dragging) {
+          opacity: 0.5;
         }
 
-        kanban-card {
-          background-color: var(--overlay-bgColor);
-          border: solid 1px var(--borderColor-default);
-          border-radius: 6px;
-          cursor: move;
-          padding: 8px 12px 12px;
+        &:state(accept-card) {
+          border: 2px solid var(--bgColor-accent-emphasis);
+        }
 
-          &:state(dragging) {
-            opacity: 0.5;
-          }
+        &:state(accept-column-right) {
+          border-width: 2px;
+          border-right-color: var(--bgColor-accent-emphasis);
+        }
 
-          &:state(accept-card-above) {
-            border-top: 2px solid var(--bgColor-accent-emphasis);
-          }
+        &:state(accept-column-left) {
+          border-width: 2px;
+          border-left-color: var(--bgColor-accent-emphasis);
+        }
 
-          &:state(accept-card-below) {
-            border-bottom: 2px solid var(--bgColor-accent-emphasis);
-          }
+        > input {
+          font-size: 16px;
+          font-weight: bold;
+          margin: 8px 16px 4px;
+        }
 
-          button {
-            font-size: 12px;
-          }
+        > ul {
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+          gap: 8px;
+          padding: 8px 16px 4px;
+          overflow-y: auto;
+          scroll-padding-bottom: 7px;
+        }
+      }
 
-          textarea {
-            width: 100%;
-          }
+      kanban-card {
+        background-color: var(--overlay-bgColor);
+        border: solid 1px var(--borderColor-default);
+        border-radius: 6px;
+        cursor: move;
+        padding: 8px 12px 12px;
+
+        &:state(dragging) {
+          opacity: 0.5;
+        }
+
+        &:state(accept-card-above) {
+          border-top: 2px solid var(--bgColor-accent-emphasis);
+        }
+
+        &:state(accept-card-below) {
+          border-bottom: 2px solid var(--bgColor-accent-emphasis);
+        }
+
+        button {
+          font-size: 12px;
+        }
+
+        textarea {
+          width: 100%;
         }
       }
     </style>
@@ -220,8 +234,8 @@
 <kanban-board data-id="${id}">
   <h2><input value="${name}" on:change="UPDATE_BOARD_NAME" /></h2>
   <label for="filter">Filter: <input value="" name="filter" id="filter" on:input="FILTER_CARDS" /></label>
+  <button on:click="ADD_COLUMN">Add Column</button>
   <ul>${columns.map((column) => renderColumn(column)).join('')}</ul>
-  <button on:click="ADD_COLUMN">+</button>
 </kanban-board>`;
     }
 
@@ -239,7 +253,7 @@
   >
   <input value="${name}" name="name" on:change="UPDATE_COLUMN_NAME" />
   <ul>${cards.map((card) => renderCard(card)).join('')}</ul>
-  <button on:click="ADD_CARD">+ Add Item</button>
+  <button on:click="ADD_CARD">Add Item</button>
 </kanban-column>`;
     }
 
