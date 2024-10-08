@@ -5,6 +5,16 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
     <title>Fuzzy Search</title>
+    <style>
+      body {
+        color: rgb(3 7 18);
+      }
+
+      dialog {
+        width: 100%;
+        max-width: 65ch;
+      }
+    </style>
   </head>
   <body>
     <fuzzy-search>
@@ -145,6 +155,16 @@
         }
       }
 
+      function hashCode(str) {
+        let hash = 0,
+          i = 0,
+          len = str.length;
+        while (i < len) {
+          hash = ((hash << 5) - hash + str.charCodeAt(i++)) << 0;
+        }
+        return hash + 2147483647 + 1;
+      }
+
       class FuzzySearch extends ProgressiveElement {
         static tagName = 'fuzzy-search';
 
@@ -164,7 +184,21 @@
 
         #article = this.querySelector('main article');
 
+        #articleId = Number(window.location.hash.slice(1));
+
         #supportsFileSystemAccess = 'showSaveFilePicker' in window;
+
+        constructor() {
+          super();
+
+          window.addEventListener('hashchange', () => {
+            this.#dialog.close();
+            this.#articleId = Number(window.location.hash.slice(1));
+            this.#loadArticle();
+          });
+
+          this.#loadArticle();
+        }
 
         async handleEvent(event) {
           const { intention, target } = findClosestIntention(event);
@@ -180,7 +214,7 @@
               const entryPromises = [];
 
               for await (const entry of directory.values()) {
-                const id = entry.name;
+                const id = hashCode(entry.name);
                 entryPromises.push(
                   entry
                     .getFile()
@@ -206,20 +240,31 @@
             case 'SEARCH': {
               const query = target.value;
 
-              this.#searchResults.textContent = '';
-
-              if (query.length === 0) return;
+              if (query.length === 0) {
+                this.#searchResults.textContent = '';
+                return;
+              }
 
               const results = await this.#search(query);
+              this.#searchResults.textContent = '';
 
               for (const result of results) {
                 this.#searchResults.innerHTML = results
-                  .map((result) => `<li><a href="/#${result.id}">${result.title} (${result.similarity ?? 0})</a></li>`)
+                  .map((result) => `<li><a href="#${result.id}">${result.title} (${result.similarity ?? 0})</a></li>`)
                   .join('');
               }
               return;
             }
           }
+        }
+
+        async #loadArticle() {
+          let result = await this.#store.get(this.#articleId);
+
+          if (!result) return;
+
+          this.#title.textContent = result.title;
+          this.#article.textContent = result.article;
         }
 
         async #search(query) {
