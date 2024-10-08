@@ -209,6 +209,7 @@
 
               const directory = await showDirectoryPicker({ id: 'files', mode: 'read' });
 
+              console.log('loading directory');
               await this.#store.clear();
 
               const entryPromises = [];
@@ -222,15 +223,17 @@
                     .then(async (text) => {
                       let [title, article] = text.split(/\n(.*)/s);
                       title = title.replace('#', '').trim();
-                      const vector = await this.#model.embed(title);
+                      const vector = await this.#model.embed(text);
                       return [id, { id, title, article, vector }];
                     })
                 );
               }
 
+              window.location.hash = '';
+
               const entries = await Promise.all(entryPromises);
               await this.#store.setMany(entries);
-              window.location.hash = '';
+              console.log('done loading directory!');
               return;
             }
             case 'OPEN_SEARCH': {
@@ -278,7 +281,7 @@
             return results
               .map((row) => ({
                 ...row,
-                similarity: !row.vector ? 0 : LLMModel.cosineSimilarity(row.vector, queryVector),
+                similarity: LLMModel.cosineSimilarity(row.vector, queryVector),
               }))
               .sort((a, b) => b.similarity - a.similarity);
           } else {
