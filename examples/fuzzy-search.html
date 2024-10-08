@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Fuzzy Search</title>
+  </head>
+  <body>
+    <fuzzy-search>
+      <nav>
+        <button on:click="OPEN_FILES">Open Files</button>
+        <button on:click="OPEN_SEARCH">Search</button>
+
+        <dialog>
+          <h2>Search</h2>
+          <div>
+            <form>
+              <label for="search">Search <input type="text" placeholder="Search" on:input="SEARCH" /></label>
+            </form>
+            <form method="dialog"><button>Close</button></form>
+          </div>
+          <ul></ul>
+        </dialog>
+      </nav>
+      <main>
+        <h1></h1>
+        <article></article>
+      </main>
+    </fuzzy-search>
+
+    <script type="module">
+      import { findClosestIntention } from '../src/intentions';
+      import { ProgressiveElement } from '../src/progressive-element';
+
+      class LLMModel {
+        static cosineSimilarity(a, b) {
+          let dotProduct = 0;
+          let mA = 0;
+          let mB = 0;
+
+          for (let i = 0; i < a.length; i++) {
+            dotProduct += a[i] * b[i];
+            mA += a[i] * a[i];
+            mB += b[i] * b[i];
+          }
+
+          mA = Math.sqrt(mA);
+          mB = Math.sqrt(mB);
+          const similarity = dotProduct / (mA * mB);
+
+          return similarity;
+        }
+
+        #model = use.load();
+
+        #loaded = false;
+
+        get loaded() {
+          return this.#loaded;
+        }
+
+        constructor() {
+          this.#model.then(() => {
+            this.#loaded = true;
+          });
+        }
+
+        async embed(query) {
+          const model = await this.#model;
+          const vector = await model.embed([query]).then((e) => e.data());
+          return Array.from(vector);
+        }
+      }
+
+      class KeyValueStore {
+        #db;
+        #storeName;
+
+        constructor(name = 'keyval-store') {
+          this.#storeName = name;
+          const request = indexedDB.open(name);
+          request.onupgradeneeded = () => request.result.createObjectStore(name);
+
+          this.#db = this.#promisifyRequest(request);
+        }
+
+        #promisifyRequest(transaction) {
+          return new Promise((resolve, reject) => {
+            transaction.onsuccess = () => resolve(transaction.result);
+            transaction.onerror = () => reject(transaction.error);
+          });
+        }
+
+        #promisifyTransaction(transaction) {
+          return new Promise((resolve, reject) => {
+            transaction.oncomplete = () => resolve();
+            transaction.onabort = transaction.onerror = () => reject(transaction.error);
+          });
+        }
+
+        #getStore(mode) {
+          return this.#db.then((db) => db.transaction(this.#storeName, mode).objectStore(this.#storeName));
+        }
+
+        get(key) {
+          return this.#getStore('readonly').then((store) => this.#promisifyRequest(store.get(key)));
+        }
+
+        set(key, value) {
+          return this.#getStore('readwrite').then((store) => {
+            store.put(value, key);
+            return this.#promisifyTransaction(store.transaction);
+          });
+        }
+
+        setMany(entries) {
+          return this.#getStore('readwrite').then((store) => {
+            entries.forEach((entry) => store.put(entry[1], entry[0]));
+            return this.#promisifyTransaction(store.transaction);
+          });
+        }
+
+        clear() {
+          return this.#getStore('readwrite').then((store) => {
+            store.clear();
+            return this.#promisifyTransaction(store.transaction);
+          });
+        }
+
+        keys() {
+          return this.#getStore('readwrite').then((store) => this.#promisifyRequest(store.getAllKeys()));
+        }
+
+        values() {
+          return this.#getStore('readwrite').then((store) => this.#promisifyRequest(store.getAll()));
+        }
+
+        entries() {
+          return this.#getStore('readwrite').then((store) =>
+            Promise.all([this.#promisifyRequest(store.getAllKeys()), this.#promisifyRequest(store.getAll())]).then(
+              ([keys, values]) => keys.map((key, i) => [key, values[i]])
+            )
+          );
+        }
+      }
+
+      class FuzzySearch extends ProgressiveElement {
+        static tagName = 'fuzzy-search';
+
+        static delegatedEvents = ['click', 'input'];
+
+        #internals = this.attachInternals();
+
+        #model = new LLMModel();
+
+        #store = new KeyValueStore('files');
+
+        #dialog = this.querySelector('dialog');
+
+        #searchResults = this.querySelector('dialog ul');
+
+        #title = this.querySelector('main h1');
+
+        #article = this.querySelector('main article');
+
+        #supportsFileSystemAccess = 'showSaveFilePicker' in window;
+
+        async handleEvent(event) {
+          const { intention, target } = findClosestIntention(event);
+
+          switch (intention) {
+            case 'OPEN_FILES': {
+              if (!this.#supportsFileSystemAccess) return;
+
+              await this.#store.clear();
+
+              const directory = await showDirectoryPicker({ id: 'files', mode: 'read' });
+
+              const entryPromises = [];
+
+              for await (const entry of directory.values()) {
+                const id = entry.name;
+                entryPromises.push(
+                  entry
+                    .getFile()
+                    .then((file) => file.text())
+                    .then(async (text) => {
+                      let [title, article] = text.split(/\n(.*)/s);
+                      title = title.replace('#', '').trim();
+                      const vector = await this.#model.embed(title);
+                      return [id, { id, title, article, vector }];
+                    })
+                );
+              }
+
+              const entries = await Promise.all(entryPromises);
+              await this.#store.setMany(entries);
+
+              return;
+            }
+            case 'OPEN_SEARCH': {
+              this.#dialog.showModal();
+              return;
+            }
+            case 'SEARCH': {
+              const query = target.value;
+
+              this.#searchResults.textContent = '';
+
+              if (query.length === 0) return;
+
+              const results = await this.#search(query);
+
+              for (const result of results) {
+                this.#searchResults.innerHTML = results
+                  .map((result) => `<li><a href="/#${result.id}">${result.title} (${result.similarity ?? 0})</a></li>`)
+                  .join('');
+              }
+              return;
+            }
+          }
+        }
+
+        async #search(query) {
+          const results = await this.#store.values();
+
+          if (this.#model.loaded) {
+            const queryVector = await this.#model.embed(query);
+
+            return results
+              .map((row) => ({
+                ...row,
+                similarity: !row.vector ? 0 : LLMModel.cosineSimilarity(row.vector, queryVector),
+              }))
+              .sort((a, b) => b.similarity - a.similarity);
+          } else {
+            return results.filter((result) => result.title.includes(query));
+          }
+        }
+      }
+
+      FuzzySearch.register();
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/universal-sentence-encoder"></script>
+  </body>
+</html>
