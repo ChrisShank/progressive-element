@@ -207,9 +207,9 @@
             case 'OPEN_FILES': {
               if (!this.#supportsFileSystemAccess) return;
 
-              await this.#store.clear();
-
               const directory = await showDirectoryPicker({ id: 'files', mode: 'read' });
+
+              await this.#store.clear();
 
               const entryPromises = [];
 
@@ -230,7 +230,7 @@
 
               const entries = await Promise.all(entryPromises);
               await this.#store.setMany(entries);
-
+              window.location.hash = '';
               return;
             }
             case 'OPEN_SEARCH': {
@@ -259,6 +259,8 @@
         }
 
         async #loadArticle() {
+          if (Number.isNaN(this.#articleId)) return;
+
           let result = await this.#store.get(this.#articleId);
 
           if (!result) return;
