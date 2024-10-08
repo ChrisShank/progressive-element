@@ -47,20 +47,12 @@
             <div class="col-md-6">
               <div class="row">
                 <div class="col-sm-6 smallpad">
-                  <button
-                    type="button"
-                    class="btn btn-primary btn-block"
-                    on:click="CREATE_1000_ROWS"
-                  >
+                  <button type="button" class="btn btn-primary btn-block" on:click="CREATE_1000_ROWS">
                     Create 1,000 rows
                   </button>
                 </div>
                 <div class="col-sm-6 smallpad">
-                  <button
-                    type="button"
-                    class="btn btn-primary btn-block"
-                    on:click="CREATE_10000_ROWS"
-                  >
+                  <button type="button" class="btn btn-primary btn-block" on:click="CREATE_10000_ROWS">
                     Create 10,000 rows
                   </button>
                 </div>
@@ -70,23 +62,15 @@
                   </button>
                 </div>
                 <div class="col-sm-6 smallpad">
-                  <button
-                    type="button"
-                    class="btn btn-primary btn-block"
-                    on:click="UPDATE_10th_ROW"
-                  >
+                  <button type="button" class="btn btn-primary btn-block" on:click="UPDATE_10th_ROW">
                     Update every 10th row
                   </button>
                 </div>
                 <div class="col-sm-6 smallpad">
-                  <button type="button" class="btn btn-primary btn-block" on:click="CLEAR_ROWS">
-                    Clear
-                  </button>
+                  <button type="button" class="btn btn-primary btn-block" on:click="CLEAR_ROWS">Clear</button>
                 </div>
                 <div class="col-sm-6 smallpad">
-                  <button type="button" class="btn btn-primary btn-block" on:click="SWAP_ROWS">
-                    Swap Rows
-                  </button>
+                  <button type="button" class="btn btn-primary btn-block" on:click="SWAP_ROWS">Swap Rows</button>
                 </div>
               </div>
             </div>
@@ -104,11 +88,7 @@
           <td class="col-md-4"><a on:click="SELECT_ROW"></a></td>
           <td class="col-md-1">
             <a on:click="SELECT_ROW"
-              ><span
-                class="glyphicon glyphicon-remove"
-                aria-hidden="true"
-                on:click="REMOVE_ROW"
-              ></span
+              ><span class="glyphicon glyphicon-remove" aria-hidden="true" on:click="REMOVE_ROW"></span
             ></a>
           </td>
           <td class="col-md-6"></td>
@@ -245,8 +225,7 @@
               if (firstChild == null || secondToLastChild == null) return;
 
               this.tbody.insertBefore(
-                this.tbody.insertBefore(firstChild.nextElementSibling, secondToLastChild)
-                  .nextElementSibling,
+                this.tbody.insertBefore(firstChild.nextElementSibling, secondToLastChild).nextElementSibling,
                 firstChild.nextElementSibling
               );
               return;
@@ -262,7 +241,7 @@
             tr.querySelector('td:nth-child(1)').textContent = this.rowId++;
             tr.querySelector('td:nth-child(2) a').textContent = label();
             fragment.appendChild(tr);
-            --n;
+            n -= 1;
           }
 
           this.tbody.appendChild(fragment);
@@ -279,7 +258,7 @@
       function findClosestIntention(event) {
         if (event.target instanceof Element) {
           const attributeName = `on:${event.type}`;
-          const target = event.target.closest(`[${CSS.escape(attributeName)}]`);
+          const target = event.target.closest(`[${attributeName}]`);
           if (target !== null) {
             const intention = target.getAttribute(attributeName);
             return { intention, target };
